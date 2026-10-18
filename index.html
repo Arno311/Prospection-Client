@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#8a5a2b">
+<title>Prospection — Atelier Piano Léman</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎹</text></svg>">
+<style>
+  :root{ color-scheme: light;
+    --bg:#f6f5f2; --card:#fff; --ink:#1c1c1a; --muted:#6b6a66;
+    --line:#e3e1db; --accent:#8a5a2b; --accent-soft:#f3ebe2;
+    --ok:#2f7a4a; --warn:#b3541e; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding-bottom:env(safe-area-inset-bottom)}
+  .wrap{max-width:900px;margin:0 auto;padding:20px 14px 70px}
+  h1{font-size:21px;margin:0 0 4px;letter-spacing:-.02em}
+  .sub{color:var(--muted);font-size:13.5px;margin:0}
+  .bar{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 6px;align-items:center}
+  button{font:inherit;font-size:14px;font-weight:600;border-radius:9px;padding:10px 14px;
+    border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;min-height:44px}
+  button:active{transform:scale(.98)}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.done{background:var(--ok)!important;border-color:var(--ok)!important;color:#fff!important}
+  button.on{background:var(--accent-soft);border-color:#dcc4a8;color:var(--accent)}
+  .stats{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);
+    background:var(--accent-soft);border:1px solid #e6d7c6;border-radius:10px;
+    padding:10px 13px;margin:12px 0 4px}
+  .stats b{color:var(--accent);font-size:15px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    margin-bottom:10px;overflow:hidden}
+  .head{display:flex;align-items:center;gap:10px;padding:14px;cursor:pointer;user-select:none}
+  .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .who{flex:1;min-width:0}
+  .nm{font-weight:650;font-size:15px;line-height:1.35}
+  .mt{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .tag{font-size:11px;font-weight:650;padding:3px 8px;border-radius:20px;flex:none;white-space:nowrap}
+  .chev{color:var(--muted);font-size:11px;flex:none;transition:transform .2s}
+  .card.open .chev{transform:rotate(90deg)}
+  .body{display:none;padding:0 14px 14px;border-top:1px solid var(--line)}
+  .card.open .body{display:block}
+  .lab{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:13px 0 4px}
+  .val{background:#faf9f6;border:1px solid var(--line);border-radius:8px;padding:10px 11px;
+    font-size:14px;word-break:break-word}
+  pre.txt{background:#faf9f6;border:1px solid var(--line);border-radius:8px;padding:13px;margin:0;
+    white-space:pre-wrap;font:14px/1.62 inherit;outline:none;word-break:break-word}
+  pre.txt:focus{background:#fff;border-color:var(--accent);box-shadow:0 0 0 3px rgba(138,90,43,.10)}
+  mark{background:#fdf1c9;padding:1px 2px;border-radius:3px}
+  .flag{margin-top:11px;font-size:13px;color:var(--warn);background:#fdf3ec;
+    border:1px solid #f2ddcd;border-radius:8px;padding:9px 11px}
+  .btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+  .btns button{flex:1 1 auto;min-width:120px}
+  .sec{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+    margin:26px 0 11px;padding-bottom:7px;border-bottom:1px solid var(--line)}
+  .msg{padding:30px 4px;color:var(--muted);font-size:14px}
+  .err{background:#fdf3ec;border:1px solid #f2ddcd;color:var(--warn);
+    border-radius:10px;padding:14px;font-size:14px;line-height:1.65}
+  .err ol{margin:10px 0 0;padding-left:22px}
+  .err li{margin:5px 0}
+  footer{margin-top:34px;font-size:12.5px;color:var(--muted);
+    border-top:1px solid var(--line);padding-top:16px}
+  a{color:var(--accent)}
+  @media (max-width:520px){
+    .wrap{padding:16px 11px 60px}
+    h1{font-size:19px}
+    .btns button{flex:1 1 100%}
+    .tag{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Prospection — Atelier Piano Léman</h1>
+<p class="sub">Lecture directe de votre feuille Google · accessible partout</p>
+
+<div class="bar">
+  <button class="primary" id="b-refresh">↻ Actualiser</button>
+  <button id="f-todo" class="on">À contacter</button>
+  <button id="f-all">Tout</button>
+  <button id="b-sheet">Feuille ↗</button>
+</div>
+<div id="horo" style="font-size:12.5px;color:var(--muted);margin:2px 0 0"></div>
+
+<div class="stats" id="stats" style="display:none"></div>
+<div id="out"><div class="msg">Lecture de la feuille…</div></div>
+
+<div id="out-hotels"></div>
+<div id="out-concierge"></div>
+<div id="out-bateaux"></div>
+
+<footer>
+  Les états se modifient dans Google Sheets — cette page les relit à chaque ouverture.<br>
+  Les mails s'arrêtent à « Bien cordialement » : votre signature automatique prend le relais.
+</footer>
+</div>
+
+<script>
+const FILE_ID   = "14t2kxCWcNFCVLp8YmYTNqoWSov9N7tMHnORBNQFShvs";
+const SHEET_URL = "https://docs.google.com/spreadsheets/d/" + FILE_ID + "/edit";
+const CSV_URL   = "https://docs.google.com/spreadsheets/d/" + FILE_ID +
+                  "/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent("Feuille 1");
+
+const COULEURS = {
+  "À contacter":["#8a5a2b","#f3ebe2"], "Mail envoyé":["#2b5f8a","#e3eef8"],
+  "Relancé":["#8a6f1e","#fdf1c9"], "RDV":["#2f7a4a","#d8f0e2"],
+  "Pas de réponse":["#6b6a66","#eceae5"], "Ne pas contacter":["#a33","#f9dcdc"],
+  "":["#6b6a66","#eceae5"] };
+
+const ACCROCHES = {
+  "arca musica":"J'interviens régulièrement sur la Côte et à Préverenges. Un piano d'école, joué plusieurs heures par jour, se dérègle bien plus vite qu'un instrument de salon — et rarement de façon visible.",
+  "fa perche":"Je passe régulièrement dans la région de Morges. Ce qui distingue un piano d'école, c'est le rythme : sollicité sans relâche, il demande un suivi que l'on n'imagine pas pour un instrument de particulier.",
+  "cresecendo piano":"Votre école étant entièrement centrée sur le piano, vous savez mieux que quiconque à quelle vitesse un instrument travaillé quotidiennement se désaccorde et se dérègle.",
+  "crescendo piano":"Votre école étant entièrement centrée sur le piano, vous savez mieux que quiconque à quelle vitesse un instrument travaillé quotidiennement se désaccorde et se dérègle.",
+  "yamaha music school":"Une école du réseau Yamaha dispose d'un parc conséquent et d'exigences précises sur la tenue des instruments — c'est exactement le type de suivi sur lequel j'interviens.",
+  "apolline":"J'interviens régulièrement sur Lausanne auprès de structures d'enseignement musical. Un piano travaillé quotidiennement vieillit autrement qu'un instrument de salon : l'usure y est plus rapide, et souvent plus discrète.",
+  "empully":"J'interviens régulièrement sur Pully et Lausanne. Dans une école, ce n'est pas tant l'âge du piano qui compte que le nombre d'heures qu'il encaisse — et c'est ce rythme-là qui dicte la fréquence d'entretien.",
+  "musique la source":"J'interviens régulièrement sur Lausanne auprès des écoles de musique. Un instrument sollicité plusieurs heures par jour perd son réglage progressivement, sans que personne ne s'en aperçoive vraiment jusqu'au jour où il sonne faux.",
+  "hl piano studio":"Dans un studio entièrement dédié au piano, l'état des instruments fait tout : je n'ai pas besoin de vous expliquer ce que coûte un piano mal réglé pendant un cours.",
+  "gregturini":"J'interviens régulièrement entre Cugy et Lausanne. Un piano d'enseignement subit en une année ce qu'un instrument de particulier traverse en dix — c'est ce qui rend son suivi si particulier.",
+  "emnyon":"Je me déplace régulièrement sur La Côte, jusqu'à Nyon. Dans une école, chaque piano encaisse des dizaines d'heures de jeu par semaine : son accord et sa mécanique bougent à un tout autre rythme.",
+  "emvr":"Votre école étant répartie sur plusieurs sites, l'entretien des pianos devient vite difficile à suivre : les instruments les plus sollicités ne sont pas toujours ceux qu'on pense, et l'état du parc n'est presque jamais homogène d'un lieu à l'autre.",
+  "compagnie albertine":"Au-delà de l'entretien courant, je propose aussi l'accordage ponctuel avant une représentation ou une captation : c'est souvent à ce moment-là qu'un instrument révèle ses faiblesses.",
+  "ecomuse":"J'interviens régulièrement dans la région lausannoise auprès de structures d'enseignement musical. Un piano joué chaque jour ne demande pas le même entretien qu'un instrument de particulier : il se dérègle plus vite, et plus silencieusement.",
+  "eml":"Avec le nombre d'élèves que vous accueillez, vos pianos comptent probablement parmi les plus sollicités de la région — et ce sont précisément ceux dont l'accord et la mécanique bougent le plus vite."
+};
+
+const NOTES = {
+  "cresecendo piano":"Cible prioritaire : école 100 % piano, donc parc important.",
+  "crescendo piano":"Cible prioritaire : école 100 % piano, donc parc important.",
+  "hl piano studio":"Cible prioritaire : structure 100 % piano.",
+  "emvr":"Plusieurs antennes (info-emsf@, info-emml@, info-emr@, info-pcht@). Un seul mail au secrétariat suffit.",
+  "compagnie albertine":"Structure artistique plutôt qu'école : accroche orientée spectacle.",
+  "eml":"Secrétariat joignable du lundi au vendredi, 10h–12h30. Un appel de suivi 3–4 jours après est très jouable."
+};
+
+const SIG = `Bien cordialement,`;
+
+const CORE = `Je vous propose de réaliser un audit de vos instruments, offert et sans engagement. Pour chacun d'eux, j'examine la tenue de l'accord, l'état de la mécanique et des marteaux ainsi que les réglages, puis je vous remets un rapport écrit : ce qui est urgent, ce qui peut attendre, et le coût estimé de chaque intervention. Même sans suite de votre part, vous disposerez d'une vision claire de votre parc pour votre prochain budget.
+
+Je m'adapte volontiers à vos horaires, y compris en dehors des plages de cours. Un simple retour à ce message suffit, ou vous pouvez me joindre au 076 221 40 89.`;
+
+const RELANCE_BODY = `Bonjour,
+
+Je me permets de revenir vers vous au sujet de mon message précédent — je sais à quel point ce type de demande passe facilement au second plan.
+
+Ma proposition tient toujours : je peux réaliser un audit de votre parc de pianos, offert et sans engagement de votre part.
+
+Si le sujet n'est pas d'actualité, dites-le-moi simplement, je n'insisterai pas.
+
+` + SIG;
+
+const CORE_HOTEL = `Un piano placé en salon ou en bar n'est jamais un simple élément de décor : c'est un instrument entendu chaque jour par une clientèle qui remarque tout, et le moindre décalage dans l'accord s'entend immédiatement dans ce genre de lieu.
+
+Si votre établissement dispose d'un tel piano, je me permets de me présenter simplement pour que vous sachiez que je suis là. Basé sur la Côte, je peux intervenir rapidement : un piano qui déraille avant un événement ne peut pas attendre huit jours. Je m'organise autour de vos horaires de service, tôt le matin ou en dehors des heures d'affluence, et je reste joignable pour toute urgence.
+
+Si ce n'est pas le bon interlocuteur pour ce message, n'hésitez pas à le transmettre à la personne compétente, ou à m'en excuser par avance.
+
+Je reste à votre entière disposition, au 076 221 40 89.`;
+
+const CORE_CONCIERGE = `Un piano n'est jamais un simple meuble : c'est un instrument qui se désaccorde en silence, et qu'on ne remarque souvent que lorsqu'il est déjà trop tard, au moment où un client s'assoit pour en jouer.
+
+Je me permets de me présenter aujourd'hui simplement pour que vous sachiez que je suis là. Ce que vos clients attendent d'un prestataire, c'est autant la maîtrise que la réactivité : je reste joignable directement, sans intermédiaire, et peux intervenir rapidement le jour où le besoin se présente — pour un accord, un entretien courant ou une réparation plus délicate. Je peux vous faire parvenir une présentation de mon parcours si cela peut vous être utile pour vos futures recommandations.
+
+Je reste à votre entière disposition, au 076 221 40 89.`;
+
+const CORE_BATEAU = `Si un piano se trouve à bord ou dans vos salons d'accueil, je vous propose un diagnostic complet de l'instrument, offert et sans engagement : tenue de l'accord, état de la mécanique, réglages, avec un rapport écrit. J'interviens en toute discrétion, calé sur vos horaires d'escale ou d'exploitation.
+
+Je reste à votre entière disposition au 076 221 40 89.`;
+
+const norm = s => (s||"").toLowerCase().normalize("NFD")
+  .replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim();
+const esc = s => (s||"").replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+function accroche(nom, ville){
+  const k = norm(nom);
+  if (ACCROCHES[k]) return {t:ACCROCHES[k], perso:true};
+  const lieu = ville ? ("la région de " + ville) : "la région lausannoise";
+  return {t:"J'interviens régulièrement dans " + lieu + " auprès de structures d'enseignement musical. Un piano joué plusieurs heures par jour ne demande pas le même entretien qu'un instrument de particulier : il se dérègle plus vite, et souvent sans prévenir.", perso:false};
+}
+function objet(etat, ville){
+  if (etat==="Mail envoyé"||etat==="Relancé"||etat==="Pas de réponse")
+    return "Re : accordage de vos pianos — proposition d'audit";
+  return ville
+    ? "Accordeur et facteur de piano à "+ville+" — audit offert de votre parc d'instruments"
+    : "Accordeur et facteur de piano — audit offert de votre parc d'instruments";
+}
+function corps(c){
+  if (c.relance) return RELANCE_BODY;
+  return `Bonjour,
+
+Je m'appelle Arnaud Cormary, je suis accordeur et facteur de piano à l'Atelier Piano Léman.
+
+${c.acc.t}
+
+${CORE}
+
+${SIG}`;
+}
+function bodyHotel(c){
+  return `Bonjour,
+
+Je m'appelle Arnaud Cormary. Je suis accordeur et facteur de piano, installé sur la Côte, et je consacre mon métier à un artisanat exigeant : l'accord, l'entretien et la restauration de pianos pour une clientèle qui ne transige pas sur la qualité.
+
+${c.h}
+
+${CORE_HOTEL}
+
+Bien cordialement,`;
+}
+function bodyConcierge(c){
+  return `Bonjour,
+
+Je m'appelle Arnaud Cormary. Je suis accordeur et facteur de piano, installé sur la région lémanique, et je consacre mon métier à un artisanat exigeant : l'accord, l'entretien et la restauration de pianos pour une clientèle qui ne transige pas sur la qualité.
+
+${c.h}
+
+${CORE_CONCIERGE}
+
+Bien cordialement,`;
+}
+function bodyBateau(c){
+  return `Bonjour,
+
+Je m'appelle Arnaud Cormary, je suis accordeur et facteur de piano à l'Atelier Piano Léman.
+
+${c.h}
+
+${CORE_BATEAU}
+
+Bien cordialement,`;
+}
+
+const HOTELS = [
+ {n:"Fairmont Le Montreux Palace", v:"Montreux", e:"montreux@fairmont.com",
+  h:"Le piano du Grand Hall, dans le sillage historique du Montreux Jazz Festival, est l'un des symboles les plus visibles de votre maison — un instrument de cette portée mérite un suivi à la hauteur de votre exigence.",
+  note:"Piano confirmé au Grand Hall et au Salon Musique."},
+ {n:"Grand Hôtel du Lac", v:"Vevey", e:"", contact:"https://www.ghdl.ch/en/contact/",
+  h:"Si le piano d'Henryk's Bar est toujours en place, sachez qu'un instrument aussi exposé au public mérite un entretien à la hauteur de la maison qui l'accueille — discret, précis, et pensé pour ne jamais gêner votre service.",
+  note:"Pas d'adresse publiée — page de contact. Piano vu en source secondaire."},
+ {n:"Hôtel des Trois Couronnes", v:"Vevey", e:"", contact:"https://www.hoteltroiscouronnes.ch/en/contact/",
+  h:"Si le piano du Veranda Bar est toujours d'actualité, sachez que c'est précisément ce type d'instrument, entendu chaque jour, qui exige l'oreille la plus attentive — celle qui perçoit ce qu'un client ne formulera jamais, mais ressentira.",
+  note:"Pas d'adresse publiée — page de contact. Piano vu en source secondaire."},
+ {n:"Beau-Rivage Palace", v:"Lausanne", e:"", contact:"https://www.brp.ch/en/contact-us/",
+  h:"Si le piano du Lobby Lounge est toujours présent face au lac et aux Alpes, sa tenue engage votre maison autant que le service en salle — ce sont ces détails-là qui distinguent un palace d'un simple hôtel.",
+  note:"Pas d'adresse publiée — page de contact. Piano vu en source secondaire."},
+ {n:"Four Seasons Hôtel des Bergues", v:"Genève", e:"gen.reservations@fourseasons.com",
+  h:"Si un piano se trouve toujours au Bar des Bergues, sachez qu'un instrument entendu chaque soir par une clientèle qui a l'habitude du meilleur ne peut se permettre l'à-peu-près.",
+  note:"Présence du piano non confirmée directement."},
+ {n:"Beau-Rivage Genève", v:"Genève", e:"reservation@beau-rivage.com",
+  h:"Votre pianiste résident anime vos soirées depuis plus de 15 ans — une telle fidélité, rare et précieuse, mérite un instrument suivi avec la même exigence et la même constance.",
+  note:"Pianiste résident depuis plus de 15 ans — bonne accroche."},
+ {n:"La Réserve Genève", v:"Genève-Bellevue", e:"", contact:"https://www.lareserve-geneve.com/en/contact-us/",
+  h:"Dans un lieu pensé jusque dans le moindre détail par Jacques Garcia, si vous disposez d'un piano, il ne mérite rien de moins que le même soin que le reste de la maison.",
+  note:"Pas d'adresse publiée — page de contact. Présence d'un piano non confirmée."}
+];
+
+const GEN_CONC = "Vos clients vous confient leurs exigences les plus précises pour leur résidence sur la Côte. Vous savez mieux que personne que tout se joue sur le bon prestataire, trouvé au bon moment.";
+const GEN_CHALET = "Vos clients vous confient l'organisation de leur chalet dans ses moindres détails — un piano, dans ce cadre alpin, appelle le même soin que le reste de la maison, et le même sens du service.";
+
+const CONCIERGES = [
+ {n:"Label Concierge", v:"Genève", e:"", contact:"https://www.labelconcierge.com/contact/", h:GEN_CONC, note:"Pas d'adresse publiée — page de contact."},
+ {n:"Eacons", v:"Genève", e:"info@eacons.ch", h:GEN_CONC, note:""},
+ {n:"M&M Luxury Services", v:"Genève", e:"contact@mmluxuryservices.com", h:GEN_CONC, note:"Adresse générique trouvée en ligne — à confirmer avant l'envoi."},
+ {n:"Royal Court", v:"Nyon · La Côte · Lausanne · Montreux", e:"", contact:"https://www.royalcourt.co/",
+  h:"Vous gérez des propriétés d'exception sur toute la Côte, de Nyon à Montreux, où chaque intervenant que vous recommandez engage votre nom autant que le sien.",
+  note:"Pas d'adresse publiée — page de contact."},
+ {n:"Le Bureau", v:"Genève", e:"info@le-bureau.ch", h:GEN_CONC, note:"Conciergerie haut de gamme active depuis 2002."},
+ {n:"Hême Luxury Realty", v:"Lausanne", e:"info@heme-luxury-realty.ch",
+  h:"Dans l'immobilier de prestige, vous savez mieux que quiconque que chaque détail engage votre réputation — un piano bien tenu en fait partie, autant qu'une toiture impeccable ou une cuisine dernier cri.",
+  note:"Agence immobilière de luxe avec volet conciergerie."},
+ {n:"Empire Rent", v:"Genève", e:"", contact:"https://www.empire-rent.ch/contact", h:GEN_CONC, note:"Pas d'adresse publiée — page de contact."},
+ {n:"Concierg'luxe", v:"Lausanne · Riviera vaudoise", e:"", contact:"https://conciergeriedeluxelausanne.ch/",
+  h:"Vous couvrez toute la Riviera vaudoise, de Pully à Epalinges, où bien des résidences privées abritent un piano rarement entretenu, faute d'un contact de confiance.",
+  note:"Pas d'adresse publiée — page de contact."},
+ {n:"NV Properties", v:"Vaud · Lausanne · Vevey · Nyon", e:"", contact:"https://www.nvproperties.fr/contact/",
+  h:"Sur vos biens du canton de Vaud, de Nyon à Vevey, certains pianos ne voient un technicien qu'au moment de l'état des lieux — quand il est déjà trop tard pour négocier sereinement.",
+  note:"Pas d'adresse publiée — page de contact."},
+ {n:"The Alpine Concierge Sàrl", v:"Lausanne", e:"", tel:"078 762 17 03", h:GEN_CONC, note:"Téléphone uniquement."},
+ {n:"Conciergerie Léman", v:"Genève", e:"", tel:"+33 7 44 09 56 24", h:GEN_CONC, note:"Gestion immobilière avec volet conciergerie. Téléphone uniquement."},
+ {n:"Laconciergerie.ch", v:"Genève", e:"", contact:"https://laconciergerie.ch/contact/", h:GEN_CONC, note:"Pas d'adresse publiée — page de contact."},
+ {n:"ALEYDIS Prestige", v:"Genève · Lausanne · Vaud", e:"", contact:"https://aleydisprestige.ch/",
+  h:"Vous placez du personnel de maison dans des propriétés qui possèdent souvent un piano — un instrument auquel le majordome ou l'intendant ne pense pas toujours, faute d'un contact établi.",
+  note:"Staffing pour familles UHNW — pas d'adresse publiée."},
+ {n:"Conciergerie « Your Time is Precious »", v:"Suisse romande", e:"", tel:"079 532 97 81", h:GEN_CONC, note:"Téléphone uniquement."},
+ {n:"Concierge CM", v:"Crans-Montana", e:"info@conciergecm.ch", h:GEN_CHALET, note:"Station de montagne, hors de votre zone habituelle — prévoir un déplacement."},
+ {n:"CosyHome Conciergerie", v:"Crans-Montana · Valais", e:"info@cosyhomeconciergerie.ch", h:GEN_CHALET, note:"Station de montagne, hors de votre zone habituelle — prévoir un déplacement."},
+ {n:"VIP Gstaad", v:"Gstaad", e:"", tel:"+41 33 744 37 28",
+  h:"À Gstaad, votre clientèle attend l'excellence jusque dans les moindres recoins du chalet — un piano bien tenu fait partie de ces attentions qui distinguent un séjour d'exception.",
+  note:"Téléphone uniquement, et hors de votre zone habituelle (~2h de route)."}
+];
+
+const BATEAUX = [
+ {n:"CGN — Compagnie Générale de Navigation", v:"Lausanne · Genève", e:"geneve@cgn.ch",
+  h:"Vos bateaux Belle Époque à roues à aubes, comme le Simplon ou le Montreux, possèdent parfois un salon musique historique — si un piano y est encore installé, il mérite un entretien à la hauteur de ce patrimoine unique sur le Léman.",
+  note:"Flotte historique classée — présence d'un piano à confirmer bateau par bateau."},
+ {n:"Mouettes Genevoises Navigation", v:"Genève", e:"info@mouettesgenevoises.ch",
+  h:"Pour vos croisières et événements privés sur la rade, un piano à bord ajoute une touche d'élégance rare — je peux en assurer l'accord avant chaque sortie ou embarquement d'exception.",
+  note:""},
+ {n:"MSC Cruises — bureau Genève", v:"Genève", e:"reservation_fr@msccruises.ch",
+  h:"Vos navires disposent souvent d'un piano bar ou d'un salon musical — si votre bureau genevois coordonne ce type de prestation ponctuelle en Suisse, je me tiens à votre disposition.",
+  note:"Croisières maritimes internationales, pas un armateur du Léman — pertinence à valider."},
+ {n:"Citron Productions", v:"Tarragone — réseau international", e:"robcitron@citronproductions.com",
+  h:"Vous coordonnez un réseau de techniciens piano pour les bateaux de croisière, yachts et propriétés privées à travers le monde.",
+  note:"« Piano Technicians World Wide » : réseau dans plus de 40 pays. Ici vous candidatez pour rejoindre le réseau.",
+  customBody:`Bonjour Rob,
+
+Je m'appelle Arnaud Cormary, je suis accordeur et facteur de piano, basé à l'Atelier Piano Léman en Suisse romande, sur les rives du lac Léman.
+
+J'ai découvert votre réseau Piano Technicians World Wide et le travail que vous coordonnez pour les compagnies de croisière à travers le monde. Le lac Léman et la Suisse romande ne semblent pas encore couverts par un technicien de votre réseau dans cette région précise, entre Genève et Montreux.
+
+Je serais intéressé à rejoindre votre réseau pour représenter cette zone : accord, entretien et petites réparations pour les pianos à bord, lors des escales ou stationnements dans la région.
+
+Je me tiens à votre disposition pour vous envoyer mon profil et mes références, ou pour échanger directement — au 076 221 40 89.
+
+Bien cordialement,`}
+];
+
+function parseCSV(txt){
+  const rows=[]; let row=[], cur="", q=false;
+  for (let i=0;i<txt.length;i++){
+    const ch=txt[i];
+    if (q){
+      if (ch==='"'){ if (txt[i+1]==='"'){ cur+='"'; i++; } else q=false; }
+      else cur+=ch;
+    } else {
+      if (ch==='"') q=true;
+      else if (ch===','){ row.push(cur); cur=""; }
+      else if (ch==='\n'){ row.push(cur); rows.push(row); row=[]; cur=""; }
+      else if (ch!=='\r') cur+=ch;
+    }
+  }
+  if (cur.length||row.length){ row.push(cur); rows.push(row); }
+  return rows;
+}
+
+function parse(csv){
+  const rows = parseCSV(csv);
+  let head=-1;
+  for (let i=0;i<rows.length;i++)
+    if (rows[i].some(x=>norm(x)==="nom")){ head=i; break; }
+  if (head<0) return [];
+  const cols = rows[head].map(norm);
+  const idx = n => cols.indexOf(n);
+  const iNom=idx("nom"), iTel=idx("numero"), iMail=idx("mail"),
+        iVille=idx("ville"), iEtat=idx("etat"), iRep=idx("reponse");
+  const out=[];
+  for (let i=head+1;i<rows.length;i++){
+    const c=rows[i];
+    const nom=(c[iNom]||"").trim();
+    if (!nom) continue;
+    out.push({ nom, ville:(c[iVille]||"").trim(),
+      tel:(c[iTel]||"").replace(/^=\+?/,"+").trim(),
+      mail:(c[iMail]||"").trim(), etat:(c[iEtat]||"").trim(),
+      rep:(c[iRep]||"").trim() });
+  }
+  return out;
+}
+
+function prepare(r){
+  const c = Object.assign({}, r);
+  c.relance = ["Mail envoyé","Relancé","Pas de réponse"].indexOf(c.etat)>=0;
+  c.acc = accroche(c.nom, c.ville);
+  c.obj = objet(c.etat, c.ville);
+  c.note = NOTES[norm(c.nom)] || "";
+  if (!c.mail) c.note = "Aucune adresse dans la feuille — à compléter, ou à appeler" + (c.tel?" au "+c.tel:"") + ".";
+  else if (!c.acc.perso && !c.relance) c.note = "Nouvelle entrée : accroche générique. Personnalisez la phrase surlignée avant d'envoyer.";
+  if (c.rep && c.etat!=="Ne pas contacter") c.note = (c.note?c.note+" ":"") + "Note de votre feuille : « " + c.rep + " »";
+  return c;
+}
+
+function copier(btn, txt){
+  btn.onclick = e => {
+    e.stopPropagation();
+    const lbl = btn.textContent;
+    const fini = () => { btn.textContent="✓ Copié"; btn.classList.add('done');
+      setTimeout(()=>{btn.textContent=lbl;btn.classList.remove('done')},1400); };
+    const t = txt();
+    if (navigator.clipboard && window.isSecureContext)
+      navigator.clipboard.writeText(t).then(fini).catch(fb);
+    else fb();
+    function fb(){
+      const ta=document.createElement('textarea'); ta.value=t;
+      ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.select();
+      try{document.execCommand('copy')}catch(_){}
+      ta.remove(); fini();
+    }
+  };
+}
+
+function fiche(o){
+  const el = document.createElement('div');
+  el.className='card';
+  el.innerHTML = `
+    <div class="head">
+      <div class="dot" style="background:${o.fg}"></div>
+      <div class="who"><div class="nm">${esc(o.nom)}</div>
+        <div class="mt">${esc(o.meta)}</div></div>
+      <div class="tag" style="color:${o.fg};background:${o.bg}">${esc(o.etat)}</div>
+      <div class="chev">▶</div>
+    </div>
+    <div class="body">
+      ${o.mail?`<div class="lab">Destinataire</div><div class="val">${esc(o.mail)}</div>`:``}
+      ${o.tel?`<div class="lab">Téléphone</div><div class="val"><a href="tel:${esc(o.tel.replace(/\s/g,''))}">${esc(o.tel)}</a></div>`:``}
+      <div class="lab">Objet</div><div class="val">${esc(o.obj)}</div>
+      <div class="lab">Message — touchez le texte pour le modifier</div>
+      <pre class="txt" contenteditable="true" spellcheck="true"></pre>
+      ${o.note?`<div class="flag">${esc(o.note)}</div>`:``}
+      <div class="btns">
+        ${o.mail?`<button class="primary b-open">✉ Ouvrir dans l'app mail</button>
+        <button class="b-body">Copier le mail</button>
+        <button class="b-adr">Copier l'adresse</button>`:``}
+        ${o.contact?`<button class="b-web">Page de contact ↗</button>`:``}
+        <button class="b-reset">Rétablir</button>
+      </div>
+    </div>`;
+  const pre = el.querySelector('pre');
+  const rendu = () => {
+    let h = esc(o.texte);
+    if (o.surligne) h = h.replace(esc(o.surligne), '<mark>'+esc(o.surligne)+'</mark>');
+    pre.innerHTML = h;
+  };
+  rendu();
+  el.querySelector('.b-reset').onclick = e => { e.stopPropagation(); rendu(); };
+  el.querySelector('.head').onclick = () => el.classList.toggle('open');
+  if (o.mail){
+    copier(el.querySelector('.b-body'), ()=>pre.innerText);
+    copier(el.querySelector('.b-adr'), ()=>o.mail);
+    el.querySelector('.b-open').onclick = e => {
+      e.stopPropagation();
+      window.location.href = "mailto:" + encodeURIComponent(o.mail)
+        + "?subject=" + encodeURIComponent(o.obj)
+        + "&body=" + encodeURIComponent(pre.innerText);
+    };
+  }
+  if (o.contact) el.querySelector('.b-web').onclick = e => {
+    e.stopPropagation(); window.open(o.contact,"_blank"); };
+  return el;
+}
+
+function carteFeuille(c){
+  const [fg,bg] = COULEURS[c.etat] || COULEURS[""];
+  return fiche({ nom:c.nom, etat:c.etat||"—", fg, bg,
+    meta:(c.ville||"—") + (c.mail?" · "+c.mail:" · pas d'e-mail"),
+    mail:c.mail, tel:c.tel, obj:c.obj, texte:corps(c),
+    surligne:c.relance?null:c.acc.t, note:c.note });
+}
+function carteManuelle(c, obj, texte, badge){
+  return fiche({ nom:c.n, etat:badge, fg:"#8a5a2b", bg:"#f3ebe2",
+    meta:(c.v||"—") + (c.e?" · "+c.e:(c.tel?" · "+c.tel:" · pas d'e-mail")),
+    mail:c.e, tel:c.tel, contact:c.contact, obj, texte,
+    surligne:c.h, note:c.note });
+}
+
+let TOUS=[], filtre="todo";
+
+function afficher(){
+  const out = document.getElementById('out');
+  out.innerHTML="";
+  const vis = TOUS.filter(c => filtre==="all" ? true
+    : (c.etat!=="Ne pas contacter" && c.etat!=="RDV"));
+  if (!vis.length){ out.innerHTML='<div class="msg">Rien à afficher.</div>'; return; }
+  const ordre=["À contacter","Pas de réponse","Mail envoyé","Relancé","RDV","Ne pas contacter",""];
+  ordre.forEach(et => {
+    const grp = vis.filter(c => (c.etat||"")===et);
+    if (!grp.length) return;
+    const h=document.createElement('div');
+    h.className='sec'; h.textContent=(et||"Sans état")+" — "+grp.length;
+    out.appendChild(h);
+    grp.forEach(c => out.appendChild(carteFeuille(c)));
+  });
+}
+
+function stats(){
+  const n={};
+  TOUS.forEach(c=>{ const k=c.etat||"Sans état"; n[k]=(n[k]||0)+1; });
+  const s=document.getElementById('stats');
+  s.style.display='';
+  s.innerHTML = Object.keys(n).map(k=>`<span><b>${n[k]}</b> ${esc(k.toLowerCase())}</span>`).join("")
+    + `<span style="margin-left:auto"><b>${TOUS.length}</b> au total</span>`;
+}
+
+function sections(){
+  const oh=document.getElementById('out-hotels'),
+        oc=document.getElementById('out-concierge'),
+        ob=document.getElementById('out-bateaux');
+  oh.innerHTML=oc.innerHTML=ob.innerHTML="";
+  let h=document.createElement('div'); h.className='sec';
+  h.textContent="Hôtels"; oh.appendChild(h);
+  HOTELS.forEach(c=>oh.appendChild(carteManuelle(c,
+    "Accordeur et facteur de piano — à la disposition de votre établissement"+(c.v?" ("+c.v+")":""),
+    bodyHotel(c),"Hôtel")));
+  h=document.createElement('div'); h.className='sec';
+  h.textContent="Conciergeries privées"; oc.appendChild(h);
+  CONCIERGES.forEach(c=>oc.appendChild(carteManuelle(c,
+    "Accordeur et facteur de piano — à votre disposition pour vos clients les plus exigeants",
+    bodyConcierge(c),"Conciergerie")));
+  h=document.createElement('div'); h.className='sec';
+  h.textContent="Bateaux & croisières"; ob.appendChild(h);
+  BATEAUX.forEach(c=>ob.appendChild(carteManuelle(c,
+    c.customBody?"Technicien piano — candidature pour rejoindre votre réseau (région du Léman)"
+                :"Accordeur et facteur de piano — entretien du piano de vos bateaux et croisières",
+    c.customBody||bodyBateau(c),"Navigation")));
+}
+
+async function charger(){
+  const out=document.getElementById('out'), horo=document.getElementById('horo');
+  out.innerHTML='<div class="msg">Lecture de la feuille…</div>';
+  try{
+    const r = await fetch(CSV_URL+"&_="+Date.now(), {cache:"no-store"});
+    if (!r.ok) throw new Error("HTTP "+r.status);
+    const csv = await r.text();
+    if (/^\s*</.test(csv)) throw new Error("accès refusé");
+    const coreStr = s => norm(s).replace(/[^a-z0-9]/g,"");
+    const exclus = [...HOTELS,...CONCIERGES,...BATEAUX]
+      .map(c=>coreStr(c.n)).filter(s=>s.length>=4);
+    TOUS = parse(csv).map(prepare).filter(c=>{
+      const cs=coreStr(c.nom);
+      if (cs.length<4) return true;
+      return !exclus.some(e=>cs.includes(e)||e.includes(cs));
+    });
+    if (!TOUS.length) throw new Error("aucune ligne trouvée");
+    stats(); afficher();
+    horo.textContent = "Feuille lue à " + new Date().toLocaleTimeString('fr-CH',
+      {hour:'2-digit',minute:'2-digit'}) + " · " + TOUS.length + " contacts.";
+  }catch(e){
+    document.getElementById('stats').style.display='none';
+    out.innerHTML = `<div class="err">
+      <b>Impossible de lire la feuille.</b> (${esc(e.message)})<br>
+      La feuille doit être accessible en lecture par lien. Dans Google Sheets :
+      <ol>
+        <li>Bouton <b>Partager</b> en haut à droite</li>
+        <li>Sous « Accès général », choisir <b>Tous les utilisateurs disposant du lien</b></li>
+        <li>Laisser le rôle sur <b>Lecteur</b>, puis <b>Terminé</b></li>
+        <li>Revenir ici et toucher <b>↻ Actualiser</b></li>
+      </ol>
+      Les sections Hôtels, Conciergeries et Bateaux ci-dessous fonctionnent sans cela.
+    </div>`;
+    horo.textContent="";
+  }
+}
+
+document.getElementById('b-refresh').onclick = charger;
+document.getElementById('b-sheet').onclick = () => window.open(SHEET_URL,"_blank");
+document.getElementById('f-todo').onclick = () => { filtre="todo";
+  document.getElementById('f-todo').classList.add('on');
+  document.getElementById('f-all').classList.remove('on'); afficher(); };
+document.getElementById('f-all').onclick = () => { filtre="all";
+  document.getElementById('f-all').classList.add('on');
+  document.getElementById('f-todo').classList.remove('on'); afficher(); };
+
+sections();
+charger();
+</script>
+</body>
+</html>
