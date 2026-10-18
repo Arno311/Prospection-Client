@@ -87,9 +87,6 @@
 <div class="stats" id="stats" style="display:none"></div>
 <div id="out"><div class="msg">Lecture de la feuille…</div></div>
 
-<div id="out-hotels"></div>
-<div id="out-concierge"></div>
-<div id="out-bateaux"></div>
 
 <footer>
   Les états se modifient dans Google Sheets — cette page les relit à chaque ouverture.<br>
@@ -100,8 +97,11 @@
 <script>
 const FILE_ID   = "14t2kxCWcNFCVLp8YmYTNqoWSov9N7tMHnORBNQFShvs";
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/" + FILE_ID + "/edit";
+// Export CSV brut de « Feuille 1 » (gid 0) : contrairement à gviz, pas de
+// conversion de type par colonne qui viderait des cellules.
 const CSV_URL   = "https://docs.google.com/spreadsheets/d/" + FILE_ID +
-                  "/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent("Feuille 1");
+                  "/export?format=csv&gid=0";
+const CACHE_KEY = "prospection.derniere-lecture";
 
 const COULEURS = {
   "À contacter":["#8a5a2b","#f3ebe2"], "Mail envoyé":["#2b5f8a","#e3eef8"],
@@ -147,6 +147,16 @@ const RELANCE_BODY = `Bonjour,
 Je me permets de revenir vers vous au sujet de mon message précédent — je sais à quel point ce type de demande passe facilement au second plan.
 
 Ma proposition tient toujours : je peux réaliser un audit de votre parc de pianos, offert et sans engagement de votre part.
+
+Si le sujet n'est pas d'actualité, dites-le-moi simplement, je n'insisterai pas.
+
+` + SIG;
+
+const RELANCE_PRESTIGE = `Bonjour,
+
+Je me permets de revenir vers vous au sujet de mon message précédent — je sais à quel point ce type de demande passe facilement au second plan.
+
+Je reste à votre disposition pour l'accord et l'entretien de vos pianos, y compris rapidement avant un événement.
 
 Si le sujet n'est pas d'actualité, dites-le-moi simplement, je n'insisterai pas.
 
@@ -318,6 +328,30 @@ Je me tiens à votre disposition pour vous envoyer mon profil et mes référence
 Bien cordialement,`}
 ];
 
+// Fiches rédigées à la main : seuls les textes (accroche, note, page de contact)
+// servent encore. Nom, adresse, ville, téléphone et état viennent de la feuille.
+const coreStr = s => norm(s).replace(/[^a-z0-9]/g,"");
+const ENRICH = [
+  ...HOTELS.map(c=>({...c, cat:"Hôtel",
+    obj:"Accordeur et facteur de piano — à la disposition de votre établissement"+(c.v?" ("+c.v+")":""),
+    body:bodyHotel})),
+  ...CONCIERGES.map(c=>({...c, cat:"Conciergerie",
+    obj:"Accordeur et facteur de piano — à votre disposition pour vos clients les plus exigeants",
+    body:bodyConcierge})),
+  ...BATEAUX.map(c=>({...c, cat:"Navigation",
+    obj:c.customBody?"Technicien piano — candidature pour rejoindre votre réseau (région du Léman)"
+                    :"Accordeur et facteur de piano — entretien du piano de vos bateaux et croisières",
+    body:c.customBody?(()=>c.customBody):bodyBateau}))
+].map(e=>({...e, key:coreStr(e.n)}));
+
+function enrichir(nom){
+  const cs = coreStr(nom);
+  if (cs.length<4) return null;
+  return ENRICH.find(e=>e.key===cs)
+      || ENRICH.find(e=>e.key.length>=4 && (cs.includes(e.key)||e.key.includes(cs)))
+      || null;
+}
+
 function parseCSV(txt){
   const rows=[]; let row=[], cur="", q=false;
   for (let i=0;i<txt.length;i++){
@@ -336,6 +370,28 @@ function parseCSV(txt){
   return rows;
 }
 
+const RE_MAIL = /[^\s@,;:<>()«»"']+@[^\s@,;:<>()«»"']+\.[a-z]{2,}/gi;
+const RE_SITE = /(?:https?:\/\/)?(?:[a-z0-9-]+\.)+(?:ch|com|de|fr|co|net|org|art|online|eu|it)(?:\/[^\s)]*)?/i;
+
+// Une cellule peut contenir plusieurs adresses (retours à la ligne, virgules…)
+// mêlées à du texte libre : on sépare les adresses du reste.
+function decouper(s){
+  s = (s||"").replace(/\r/g,"");
+  const mails = (s.match(RE_MAIL)||[]).map(m=>m.replace(/\.$/,""));
+  const reste = s.replace(RE_MAIL,"").replace(/^[\s,;\/–-]+|[\s,;\/–-]+$/g,"").trim();
+  return {mails, reste};
+}
+
+// « =+41 79… » (saisi pour éviter une formule), « 41 33… » sans « + »,
+// ou une erreur de formule (#ERROR!) : on rend un numéro exploitable.
+function telephone(s){
+  s = (s||"").trim().replace(/^'/,"");
+  if (/^#/.test(s)) return "";
+  s = s.replace(/^=\s*/,"");
+  if (/^(41|33|39|44|49)\s/.test(s)) s = "+" + s;
+  return s;
+}
+
 function parse(csv){
   const rows = parseCSV(csv);
   let head=-1;
@@ -343,18 +399,25 @@ function parse(csv){
     if (rows[i].some(x=>norm(x)==="nom")){ head=i; break; }
   if (head<0) return [];
   const cols = rows[head].map(norm);
-  const idx = n => cols.indexOf(n);
-  const iNom=idx("nom"), iTel=idx("numero"), iMail=idx("mail"),
-        iVille=idx("ville"), iEtat=idx("etat"), iRep=idx("reponse");
+  // Colonnes repérées par leur nom, avec la position A…H en secours. Les deux
+  // colonnes « État » (F et G) portent le même nom : seule la première (F) fait foi.
+  const pos = (n, p) => { const i = cols.indexOf(n); return i>=0 ? i : p; };
+  const iNom=pos("nom",0), iTel=pos("numero",1), iMail=pos("mail",2),
+        iMail2=pos("mail 2",3), iVille=pos("ville",4), iEtat=pos("etat",5),
+        iRep=pos("reponse", cols[7] ? -1 : 7);
   const out=[];
   for (let i=head+1;i<rows.length;i++){
     const c=rows[i];
     const nom=(c[iNom]||"").trim();
     if (!nom) continue;
+    const m1=decouper(c[iMail]), m2=decouper(c[iMail2]);
+    const mails=[...new Set([...m1.mails,...m2.mails].map(m=>m.toLowerCase()))];
     out.push({ nom, ville:(c[iVille]||"").trim(),
-      tel:(c[iTel]||"").replace(/^=\+?/,"+").trim(),
-      mail:(c[iMail]||"").trim(), etat:(c[iEtat]||"").trim(),
-      rep:(c[iRep]||"").trim() });
+      tel:telephone(c[iTel]),
+      mail:mails[0]||"", autres:mails.slice(1),
+      info:[m1.reste,m2.reste].filter(Boolean).join(" — "),
+      etat:(c[iEtat]||"").trim(),
+      rep:iRep>=0 ? (c[iRep]||"").trim() : "" });
   }
   return out;
 }
@@ -362,12 +425,33 @@ function parse(csv){
 function prepare(r){
   const c = Object.assign({}, r);
   c.relance = ["Mail envoyé","Relancé","Pas de réponse"].indexOf(c.etat)>=0;
-  c.acc = accroche(c.nom, c.ville);
-  c.obj = objet(c.etat, c.ville);
-  c.note = NOTES[norm(c.nom)] || "";
-  if (!c.mail) c.note = "Aucune adresse dans la feuille — à compléter, ou à appeler" + (c.tel?" au "+c.tel:"") + ".";
-  else if (!c.acc.perso && !c.relance) c.note = "Nouvelle entrée : accroche générique. Personnalisez la phrase surlignée avant d'envoyer.";
-  if (c.rep && c.etat!=="Ne pas contacter") c.note = (c.note?c.note+" ":"") + "Note de votre feuille : « " + c.rep + " »";
+  const site = c.info.match(RE_SITE);
+  c.e = enrichir(c.nom);
+  if (c.e){
+    c.cat = c.e.cat;
+    c.obj = c.relance ? "Re : " + c.e.obj : c.e.obj;
+    c.texte = c.relance ? RELANCE_PRESTIGE : c.e.body(c.e);
+    c.surligne = c.relance ? null : c.e.h;
+    c.contact = site ? (/^http/.test(site[0])?site[0]:"https://"+site[0]) : (c.e.contact||"");
+    c.note = c.e.note || "";
+    // Ces remarques décrivaient l'ancienne liste : la feuille fait foi désormais.
+    c.note = c.note.replace(/(Pas d'adresse publiée[^.]*\.?|Téléphone uniquement(\.|, et)?)\s*/gi,"")
+      .replace(/^[\s,.—-]+|[\s,—-]+$/g,"").replace(/^./,ch=>ch.toUpperCase());
+    if (!c.mail) c.note = "Aucune adresse dans la feuille — " + (c.contact?"passer par la page de contact":"à compléter") + (c.tel?", ou appeler au "+c.tel:"") + "." + (c.note?" "+c.note:"");
+  } else {
+    c.cat = "";
+    c.acc = accroche(c.nom, c.ville);
+    c.obj = objet(c.etat, c.ville);
+    c.texte = corps(c);
+    c.surligne = c.relance ? null : c.acc.t;
+    c.contact = site ? (/^http/.test(site[0])?site[0]:"https://"+site[0]) : "";
+    c.note = NOTES[norm(c.nom)] || "";
+    if (!c.mail) c.note = "Aucune adresse dans la feuille — à compléter" + (c.tel?", ou à appeler au "+c.tel:"") + ".";
+    else if (!c.acc.perso && !c.relance) c.note = "Nouvelle entrée : accroche générique. Personnalisez la phrase surlignée avant d'envoyer.";
+  }
+  const ajout = t => { c.note = c.note ? c.note.replace(/([^.!?»])$/,"$1.") + " " + t : t; };
+  if (c.info) ajout("Infos de votre feuille : « " + c.info + " »");
+  if (c.rep && c.etat!=="Ne pas contacter") ajout("Note de votre feuille : « " + c.rep + " »");
   return c;
 }
 
@@ -391,6 +475,9 @@ function copier(btn, txt){
   };
 }
 
+const mailto = (adr, obj, txt) => "mailto:" + encodeURIComponent(adr)
+  + "?subject=" + encodeURIComponent(obj) + "&body=" + encodeURIComponent(txt);
+
 function fiche(o){
   const el = document.createElement('div');
   el.className='card';
@@ -404,6 +491,8 @@ function fiche(o){
     </div>
     <div class="body">
       ${o.mail?`<div class="lab">Destinataire</div><div class="val">${esc(o.mail)}</div>`:``}
+      ${o.autres.length?`<div class="lab">Autres adresses de la feuille</div>
+        <div class="btns">${o.autres.map((a,i)=>`<button class="b-alt" data-i="${i}">✉ ${esc(a)}</button>`).join("")}</div>`:``}
       ${o.tel?`<div class="lab">Téléphone</div><div class="val"><a href="tel:${esc(o.tel.replace(/\s/g,''))}">${esc(o.tel)}</a></div>`:``}
       <div class="lab">Objet</div><div class="val">${esc(o.obj)}</div>
       <div class="lab">Message — touchez le texte pour le modifier</div>
@@ -431,11 +520,13 @@ function fiche(o){
     copier(el.querySelector('.b-adr'), ()=>o.mail);
     el.querySelector('.b-open').onclick = e => {
       e.stopPropagation();
-      window.location.href = "mailto:" + encodeURIComponent(o.mail)
-        + "?subject=" + encodeURIComponent(o.obj)
-        + "&body=" + encodeURIComponent(pre.innerText);
+      window.location.href = mailto(o.mail, o.obj, pre.innerText);
     };
   }
+  el.querySelectorAll('.b-alt').forEach(b => b.onclick = e => {
+    e.stopPropagation();
+    window.location.href = mailto(o.autres[+b.dataset.i], o.obj, pre.innerText);
+  });
   if (o.contact) el.querySelector('.b-web').onclick = e => {
     e.stopPropagation(); window.open(o.contact,"_blank"); };
   return el;
@@ -444,15 +535,10 @@ function fiche(o){
 function carteFeuille(c){
   const [fg,bg] = COULEURS[c.etat] || COULEURS[""];
   return fiche({ nom:c.nom, etat:c.etat||"—", fg, bg,
-    meta:(c.ville||"—") + (c.mail?" · "+c.mail:" · pas d'e-mail"),
-    mail:c.mail, tel:c.tel, obj:c.obj, texte:corps(c),
-    surligne:c.relance?null:c.acc.t, note:c.note });
-}
-function carteManuelle(c, obj, texte, badge){
-  return fiche({ nom:c.n, etat:badge, fg:"#8a5a2b", bg:"#f3ebe2",
-    meta:(c.v||"—") + (c.e?" · "+c.e:(c.tel?" · "+c.tel:" · pas d'e-mail")),
-    mail:c.e, tel:c.tel, contact:c.contact, obj, texte,
-    surligne:c.h, note:c.note });
+    meta:(c.cat?c.cat+" · ":"") + (c.ville||"—")
+      + (c.mail?" · "+c.mail:(c.tel?" · "+c.tel:" · pas d'e-mail")),
+    mail:c.mail, autres:c.autres, tel:c.tel, contact:c.contact, obj:c.obj,
+    texte:c.texte, surligne:c.surligne, note:c.note });
 }
 
 let TOUS=[], filtre="todo";
@@ -463,8 +549,9 @@ function afficher(){
   const vis = TOUS.filter(c => filtre==="all" ? true
     : (c.etat!=="Ne pas contacter" && c.etat!=="RDV"));
   if (!vis.length){ out.innerHTML='<div class="msg">Rien à afficher.</div>'; return; }
-  const ordre=["À contacter","Pas de réponse","Mail envoyé","Relancé","RDV","Ne pas contacter",""];
-  ordre.forEach(et => {
+  const ordre=["À contacter","Pas de réponse","Mail envoyé","Relancé","RDV","Ne pas contacter"];
+  const groupes=[...ordre, ...new Set(vis.map(c=>c.etat||"").filter(e=>ordre.indexOf(e)<0))];
+  groupes.forEach(et => {
     const grp = vis.filter(c => (c.etat||"")===et);
     if (!grp.length) return;
     const h=document.createElement('div');
@@ -483,63 +570,69 @@ function stats(){
     + `<span style="margin-left:auto"><b>${TOUS.length}</b> au total</span>`;
 }
 
-function sections(){
-  const oh=document.getElementById('out-hotels'),
-        oc=document.getElementById('out-concierge'),
-        ob=document.getElementById('out-bateaux');
-  oh.innerHTML=oc.innerHTML=ob.innerHTML="";
-  let h=document.createElement('div'); h.className='sec';
-  h.textContent="Hôtels"; oh.appendChild(h);
-  HOTELS.forEach(c=>oh.appendChild(carteManuelle(c,
-    "Accordeur et facteur de piano — à la disposition de votre établissement"+(c.v?" ("+c.v+")":""),
-    bodyHotel(c),"Hôtel")));
-  h=document.createElement('div'); h.className='sec';
-  h.textContent="Conciergeries privées"; oc.appendChild(h);
-  CONCIERGES.forEach(c=>oc.appendChild(carteManuelle(c,
-    "Accordeur et facteur de piano — à votre disposition pour vos clients les plus exigeants",
-    bodyConcierge(c),"Conciergerie")));
-  h=document.createElement('div'); h.className='sec';
-  h.textContent="Bateaux & croisières"; ob.appendChild(h);
-  BATEAUX.forEach(c=>ob.appendChild(carteManuelle(c,
-    c.customBody?"Technicien piano — candidature pour rejoindre votre réseau (région du Léman)"
-                :"Accordeur et facteur de piano — entretien du piano de vos bateaux et croisières",
-    c.customBody||bodyBateau(c),"Navigation")));
+const heure = d => d.toLocaleTimeString('fr-CH',{hour:'2-digit',minute:'2-digit'});
+
+async function lire(){
+  const ctl = new AbortController();
+  const t = setTimeout(()=>ctl.abort(), 15000);
+  try{
+    const r = await fetch(CSV_URL+"&_="+Date.now(), {cache:"no-store", signal:ctl.signal});
+    if (r.status===401||r.status===403) throw new Error("accès refusé par Google — partage à vérifier");
+    if (r.status===404) throw new Error("feuille introuvable");
+    if (!r.ok) throw new Error("erreur Google (HTTP "+r.status+")");
+    const csv = await r.text();
+    if (/^\s*</.test(csv)) throw new Error("accès refusé par Google — partage à vérifier");
+    return csv;
+  }catch(e){
+    if (e.name==="AbortError") throw new Error("Google ne répond pas (délai dépassé)");
+    // Safari : « Load failed », Chrome : « Failed to fetch » — la requête n'a pas
+    // abouti (réseau coupé, bloqueur, ou feuille non partagée → redirection vers la connexion).
+    if (e instanceof TypeError) throw new Error("connexion à Google impossible (réseau, bloqueur de contenu ou partage de la feuille)");
+    throw e;
+  }finally{ clearTimeout(t); }
+}
+
+function montrer(csv){
+  TOUS = parse(csv).map(prepare);
+  if (!TOUS.length) throw new Error("aucune ligne trouvée dans la feuille");
+  stats(); afficher();
 }
 
 async function charger(){
   const out=document.getElementById('out'), horo=document.getElementById('horo');
   out.innerHTML='<div class="msg">Lecture de la feuille…</div>';
+  horo.textContent="";
   try{
-    const r = await fetch(CSV_URL+"&_="+Date.now(), {cache:"no-store"});
-    if (!r.ok) throw new Error("HTTP "+r.status);
-    const csv = await r.text();
-    if (/^\s*</.test(csv)) throw new Error("accès refusé");
-    const coreStr = s => norm(s).replace(/[^a-z0-9]/g,"");
-    const exclus = [...HOTELS,...CONCIERGES,...BATEAUX]
-      .map(c=>coreStr(c.n)).filter(s=>s.length>=4);
-    TOUS = parse(csv).map(prepare).filter(c=>{
-      const cs=coreStr(c.nom);
-      if (cs.length<4) return true;
-      return !exclus.some(e=>cs.includes(e)||e.includes(cs));
-    });
-    if (!TOUS.length) throw new Error("aucune ligne trouvée");
-    stats(); afficher();
-    horo.textContent = "Feuille lue à " + new Date().toLocaleTimeString('fr-CH',
-      {hour:'2-digit',minute:'2-digit'}) + " · " + TOUS.length + " contacts.";
+    let csv;
+    try{ csv = await lire(); }
+    catch(_){ await new Promise(r=>setTimeout(r,1500)); csv = await lire(); }
+    montrer(csv);
+    try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), csv})); }catch(_){}
+    horo.textContent = "Feuille lue à " + heure(new Date()) + " · " + TOUS.length + " contacts.";
   }catch(e){
+    let cache=null;
+    try{ cache = JSON.parse(localStorage.getItem(CACHE_KEY)||"null"); }catch(_){}
+    if (cache && cache.csv){
+      try{
+        montrer(cache.csv);
+        const d = new Date(cache.t);
+        horo.innerHTML = `<span style="color:var(--warn)">⚠ Lecture impossible (${esc(e.message)}). `
+          + `Affichage de la dernière lecture, du ${d.toLocaleDateString('fr-CH')} à ${heure(d)} — les états peuvent avoir changé.</span>`;
+        return;
+      }catch(_){}
+    }
     document.getElementById('stats').style.display='none';
     out.innerHTML = `<div class="err">
       <b>Impossible de lire la feuille.</b> (${esc(e.message)})<br>
-      La feuille doit être accessible en lecture par lien. Dans Google Sheets :
+      Vérifiez d'abord la connexion, puis touchez <b>↻ Actualiser</b>.
+      Si le problème persiste, la feuille doit être accessible en lecture par lien. Dans Google Sheets :
       <ol>
         <li>Bouton <b>Partager</b> en haut à droite</li>
         <li>Sous « Accès général », choisir <b>Tous les utilisateurs disposant du lien</b></li>
-        <li>Laisser le rôle sur <b>Lecteur</b>, puis <b>Terminé</b></li>
+        <li>Rôle <b>Lecteur</b>, puis <b>Terminé</b></li>
         <li>Revenir ici et toucher <b>↻ Actualiser</b></li>
       </ol>
-      Les sections Hôtels, Conciergeries et Bateaux ci-dessous fonctionnent sans cela.
     </div>`;
-    horo.textContent="";
   }
 }
 
@@ -552,7 +645,6 @@ document.getElementById('f-all').onclick = () => { filtre="all";
   document.getElementById('f-all').classList.add('on');
   document.getElementById('f-todo').classList.remove('on'); afficher(); };
 
-sections();
 charger();
 </script>
 </body>
