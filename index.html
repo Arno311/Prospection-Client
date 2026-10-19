@@ -201,7 +201,8 @@ const CIBLES = [
 
 Si votre service fait appel à des experts externes pour ce type de dossier, je serais heureux de figurer parmi vos contacts. Un simple retour à ce message suffit, ou vous pouvez me joindre au 076 221 40 89.`,
   relance:"Je reste à votre disposition pour l'expertise de pianos sinistrés : constat, évaluation des dommages et rapport écrit pour vos dossiers."},
- {cat:"Revendeur",
+ // masque:true → contacts lus dans la feuille mais non affichés dans l'app.
+ {cat:"Revendeur", masque:true,
   re:/thomann|music store|kirstein|session music|musik produktiv|kawai|yamaha music europe|klavier/,
   obj:"Technicien piano partenaire en Suisse romande — mise en service et service après-vente",
   acc:"Pour un revendeur, chaque piano livré en Suisse romande engage votre image bien après la vente : la mise en accord après livraison, les réglages sous garantie et le suivi des premiers mois se jouent loin de votre magasin.",
@@ -655,7 +656,7 @@ async function lire(){
 }
 
 function montrer(csv){
-  TOUS = parse(csv).map(prepare);
+  TOUS = parse(csv).map(prepare).filter(c => !(c.k && c.k.masque));
   if (!TOUS.length) throw new Error("aucune ligne trouvée dans la feuille");
   stats(); afficher();
 }
