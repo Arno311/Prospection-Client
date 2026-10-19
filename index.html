@@ -52,6 +52,10 @@
     border:1px solid #f2ddcd;border-radius:8px;padding:9px 11px}
   .btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
   .btns button{flex:1 1 auto;min-width:120px}
+  /* 16px minimum : en dessous, Safari iOS zoome sur le champ */
+  #q{width:100%;font:inherit;font-size:16px;margin:12px 0 0;padding:10px 13px;min-height:44px;
+    border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);outline:none}
+  #q:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(138,90,43,.10)}
   .sec{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
     margin:26px 0 11px;padding-bottom:7px;border-bottom:1px solid var(--line)}
   .msg{padding:30px 4px;color:var(--muted);font-size:14px}
@@ -83,6 +87,8 @@
   <button id="b-sheet">Feuille ↗</button>
 </div>
 <div id="horo" style="font-size:12.5px;color:var(--muted);margin:2px 0 0"></div>
+<input id="q" type="search" placeholder="Rechercher : nom, ville, e-mail, catégorie…"
+  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 
 <div class="stats" id="stats" style="display:none"></div>
 <div id="out"><div class="msg">Lecture de la feuille…</div></div>
@@ -462,6 +468,8 @@ function parse(csv){
       mail:mails[0]||"", autres:mails.slice(1),
       info:[m1.reste,m2.reste].filter(Boolean).join(" — "),
       etat:(c[iEtat]||"").trim(),
+      // Chaque enregistrement CSV correspond à une ligne de la feuille (ligne i+1).
+      celluleEtat:String.fromCharCode(65+iEtat) + (i+1),
       rep:iRep>=0 ? (c[iRep]||"").trim() : "" });
   }
   return out;
@@ -566,6 +574,7 @@ function fiche(o){
         <button class="b-body">Copier le mail</button>
         <button class="b-adr">Copier l'adresse</button>`:``}
         ${o.contact?`<button class="b-web">Page de contact ↗</button>`:``}
+        ${o.celluleEtat?`<button class="b-etat">Mettre à jour l'état ↗</button>`:``}
         <button class="b-reset">Rétablir</button>
       </div>
     </div>`;
@@ -592,6 +601,8 @@ function fiche(o){
   });
   if (o.contact) el.querySelector('.b-web').onclick = e => {
     e.stopPropagation(); window.open(o.contact,"_blank"); };
+  if (o.celluleEtat) el.querySelector('.b-etat').onclick = e => {
+    e.stopPropagation(); window.open(SHEET_URL+"#gid=0&range="+o.celluleEtat,"_blank"); };
   return el;
 }
 
@@ -600,7 +611,7 @@ function carteFeuille(c){
   return fiche({ nom:c.nom, etat:c.etat||"—", fg, bg,
     meta:(c.cat?c.cat+" · ":"") + (c.ville||"—")
       + (c.mail?" · "+c.mail:(c.tel?" · "+c.tel:" · pas d'e-mail")),
-    mail:c.mail, autres:c.autres, tel:c.tel, contact:c.contact, obj:c.obj,
+    mail:c.mail, autres:c.autres, tel:c.tel, contact:c.contact, celluleEtat:c.celluleEtat, obj:c.obj,
     texte:c.texte, surligne:c.surligne, note:c.note });
 }
 
@@ -609,9 +620,12 @@ let TOUS=[], filtre="todo";
 function afficher(){
   const out = document.getElementById('out');
   out.innerHTML="";
-  const vis = TOUS.filter(c => filtre==="all" ? true
-    : (c.etat!=="Ne pas contacter" && c.etat!=="RDV"));
-  if (!vis.length){ out.innerHTML='<div class="msg">Rien à afficher.</div>'; return; }
+  // Une recherche porte sur tous les contacts, quel que soit le filtre.
+  const q = norm(document.getElementById('q').value);
+  const vis = TOUS.filter(c => q
+    ? norm([c.nom,c.ville,c.mail,c.autres.join(" "),c.cat,c.etat].join(" ")).includes(q)
+    : filtre==="all" || (c.etat!=="Ne pas contacter" && c.etat!=="RDV"));
+  if (!vis.length){ out.innerHTML='<div class="msg">'+(q?"Aucun contact ne correspond à la recherche.":"Rien à afficher.")+'</div>'; return; }
   const ordre=["À contacter","Pas de réponse","Mail envoyé","Relancé","RDV","Ne pas contacter"];
   const groupes=[...ordre, ...new Set(vis.map(c=>c.etat||"").filter(e=>ordre.indexOf(e)<0))];
   groupes.forEach(et => {
@@ -700,6 +714,7 @@ async function charger(){
 }
 
 document.getElementById('b-refresh').onclick = charger;
+document.getElementById('q').oninput = afficher;
 document.getElementById('b-sheet').onclick = () => window.open(SHEET_URL,"_blank");
 document.getElementById('f-todo').onclick = () => { filtre="todo";
   document.getElementById('f-todo').classList.add('on');
