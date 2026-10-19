@@ -180,6 +180,50 @@ const CORE_BATEAU = `Si un piano se trouve à bord ou dans vos salons d'accueil,
 
 Je reste à votre entière disposition au 076 221 40 89.`;
 
+const relanceCible = phrase => `Bonjour,
+
+Je me permets de revenir vers vous au sujet de mon message précédent — je sais à quel point ce type de demande passe facilement au second plan.
+
+${phrase}
+
+Si le sujet n'est pas d'actualité, dites-le-moi simplement, je n'insisterai pas.
+
+` + SIG;
+
+// Cibles hors écoles, reconnues par le nom ou les infos de la feuille
+// (la feuille n'a pas de colonne « catégorie »). L'ordre compte : premier trouvé.
+const CIBLES = [
+ {cat:"Assurance",
+  re:/assuranc|mobiliere|\baxa\b|swiss life|helvetia|baloise|generali|allianz|\bcss\b|vaudoise/,
+  obj:"Expertise de pianos sinistrés — technicien indépendant en Suisse romande",
+  acc:"Lorsqu'un sinistre touche un piano — dégât d'eau, chute lors d'un déménagement, exposition à la chaleur — l'évaluation des dommages demande un œil de spécialiste : ce qui paraît superficiel peut avoir atteint la table d'harmonie ou la mécanique, et l'inverse est tout aussi fréquent.",
+  core:`Je vous propose mes services d'expertise pour vos dossiers impliquant un piano : constat sur place, évaluation des dommages et de la valeur de l'instrument, chiffrage de la remise en état ou constat de perte totale, le tout consigné dans un rapport écrit directement exploitable par vos gestionnaires. J'interviens dans toute la Suisse romande, dans des délais courts.
+
+Si votre service fait appel à des experts externes pour ce type de dossier, je serais heureux de figurer parmi vos contacts. Un simple retour à ce message suffit, ou vous pouvez me joindre au 076 221 40 89.`,
+  relance:"Je reste à votre disposition pour l'expertise de pianos sinistrés : constat, évaluation des dommages et rapport écrit pour vos dossiers."},
+ {cat:"Revendeur",
+  re:/thomann|music store|kirstein|session music|musik produktiv|kawai|yamaha music europe|klavier/,
+  obj:"Technicien piano partenaire en Suisse romande — mise en service et service après-vente",
+  acc:"Pour un revendeur, chaque piano livré en Suisse romande engage votre image bien après la vente : la mise en accord après livraison, les réglages sous garantie et le suivi des premiers mois se jouent loin de votre magasin.",
+  core:`Je vous propose d'intervenir comme technicien partenaire dans la région lémanique : accord de mise en service après livraison, interventions sous garantie, préparation d'instruments et suivi de vos clients sur place, avec un compte rendu après chaque intervention.
+
+Si vous cherchez un relais technique fiable entre Genève et Montreux, un simple retour à ce message suffit, ou vous pouvez me joindre au 076 221 40 89.`,
+  relance:"Je reste à votre disposition comme technicien partenaire en Suisse romande, pour la mise en service et le suivi des pianos que vous livrez dans la région."},
+ {cat:"Événementiel",
+  re:/sono|evenement|event|audiovisuel|concert|orchestra|regisseur|son et lumiere|imersis|strobotech|raya sound|ppc concept|planner|calla concept|2vibes|dynam/,
+  obj:"Accordeur de piano pour vos concerts et événements — Suisse romande",
+  acc:"Sur un événement, le piano est souvent le seul instrument que personne sur place ne peut régler : un accord fait la veille ne tient pas toujours après un transport, un changement de salle ou des projecteurs qui chauffent la scène.",
+  core:`Je vous propose d'assurer l'accord des pianos de vos concerts, galas et événements : intervention sur place avant les balances, retouche entre deux passages si nécessaire, et contrôle rapide de la mécanique. Je m'adapte aux horaires de montage, tôt le matin ou tard le soir, et je reste joignable le jour J.
+
+Si vos clients vous demandent ce type de prestation, je serais heureux d'être votre contact. Un simple retour à ce message suffit, ou vous pouvez me joindre au 076 221 40 89.`,
+  relance:"Je reste à votre disposition pour l'accord des pianos de vos concerts et événements, y compris le jour même, avant les balances."}
+];
+
+function cible(c){
+  const t = norm(c.nom + " " + c.info);
+  return CIBLES.find(k=>k.re.test(t)) || null;
+}
+
 const norm = s => (s||"").toLowerCase().normalize("NFD")
   .replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim();
 const esc = s => (s||"").replace(/&/g,'&amp;').replace(/</g,'&lt;');
@@ -438,6 +482,24 @@ function prepare(r){
     c.note = c.note.replace(/(Pas d'adresse publiée[^.]*\.?|Téléphone uniquement(\.|, et)?)\s*/gi,"")
       .replace(/^[\s,.—-]+|[\s,—-]+$/g,"").replace(/^./,ch=>ch.toUpperCase());
     if (!c.mail) c.note = "Aucune adresse dans la feuille — " + (c.contact?"passer par la page de contact":"à compléter") + (c.tel?", ou appeler au "+c.tel:"") + "." + (c.note?" "+c.note:"");
+  } else if ((c.k = cible(c)) && !ACCROCHES[norm(c.nom)]){
+    c.cat = c.k.cat;
+    c.obj = c.relance ? "Re : " + c.k.obj : c.k.obj;
+    c.texte = c.relance ? relanceCible(c.k.relance) : `Bonjour,
+
+Je m'appelle Arnaud Cormary, je suis accordeur et facteur de piano à l'Atelier Piano Léman.
+
+${c.k.acc}
+
+${c.k.core}
+
+${SIG}`;
+    c.surligne = c.relance ? null : c.k.acc;
+    c.contact = site ? (/^http/.test(site[0])?site[0]:"https://"+site[0]) : "";
+    c.note = NOTES[norm(c.nom)] || "";
+    if (!c.mail) c.note = "Aucune adresse dans la feuille — à compléter" + (c.tel?", ou à appeler au "+c.tel:"") + ".";
+    else if (!c.relance) c.note = "Accroche type « " + c.k.cat + " » : relisez la phrase surlignée avant d'envoyer.";
+    if (/\((de|d|at)\)/i.test(c.ville)) c.note = (c.note?c.note+" ":"") + "Contact hors de Suisse : un message en allemand ou en anglais sera sans doute mieux reçu.";
   } else {
     c.cat = "";
     c.acc = accroche(c.nom, c.ville);
