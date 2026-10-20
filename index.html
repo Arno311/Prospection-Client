@@ -25,6 +25,11 @@
   button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   button.done{background:var(--ok)!important;border-color:var(--ok)!important;color:#fff!important}
   button.on{background:var(--accent-soft);border-color:#dcc4a8;color:var(--accent)}
+  .chips{display:flex;gap:6px;overflow-x:auto;margin:10px -14px 0;padding:2px 14px 6px;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:none;min-height:36px;padding:6px 12px;font-size:13px;border-radius:20px;font-weight:600}
+  .chip small{font-weight:600;opacity:.7;margin-left:4px}
   .stats{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);
     background:var(--accent-soft);border:1px solid #e6d7c6;border-radius:10px;
     padding:10px 13px;margin:12px 0 4px}
@@ -85,11 +90,9 @@
   <button id="f-todo" class="on">À contacter</button>
   <button id="f-all">Tout</button>
   <button id="b-sheet">Feuille ↗</button>
-  <select id="f-cat" aria-label="Filtrer par catégorie"
-    style="font:inherit;font-size:14px;font-weight:600;border-radius:9px;padding:10px 12px;min-height:44px;border:1px solid var(--line);background:#fff;color:var(--ink)">
-    <option value="">Toutes catégories</option>
-  </select>
+  <button id="f-group" title="Changer le classement">Classé par : catégorie</button>
 </div>
+<div id="cats" class="chips"></div>
 <div id="horo" style="font-size:12.5px;color:var(--muted);margin:2px 0 0"></div>
 <input id="q" type="search" placeholder="Rechercher : nom, ville, e-mail, catégorie…"
   autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
@@ -555,6 +558,7 @@ ${SIG}`;
     if (!c.mail) c.note = "Aucune adresse dans la feuille — à compléter" + (c.tel?", ou à appeler au "+c.tel:"") + ".";
     else if (!c.acc.perso && !c.relance) c.note = "Nouvelle entrée : accroche générique. Personnalisez la phrase surlignée avant d'envoyer.";
   }
+  if (c.catFeuille) c.cat = c.catFeuille;
   const ajout = t => { c.note = c.note ? c.note.replace(/([^.!?»])$/,"$1.") + " " + t : t; };
   if (c.info) ajout("Infos de votre feuille : « " + c.info + " »");
   if (c.rep && c.etat!=="Ne pas contacter") ajout("Note de votre feuille : « " + c.rep + " »");
@@ -650,28 +654,52 @@ function carteFeuille(c){
     texte:c.texte, surligne:c.surligne, note:c.note });
 }
 
-let TOUS=[], filtre="todo";
+let TOUS=[], filtre="todo", catSel="", groupe="cat";
+const ORDRE_ETAT=["À contacter","Pas de réponse","Mail envoyé","Relancé","RDV","Ne pas contacter"];
+const ORDRE_CAT=["École scolaire","École de musique","Hôtel","Conciergerie","Assurance","Événementiel","Salle / Culture","Navigation","Institution","Revendeur"];
+const rangEtat = e => { const i=ORDRE_ETAT.indexOf(e||""); return i<0?99:i; };
+const rangCat  = k => { const i=ORDRE_CAT.indexOf(k||""); return k?(i<0?50:i):99; };
+
+// Puces de catégories avec compteurs (hors contacts à ne pas contacter dans « À contacter »).
+function puces(){
+  const box=document.getElementById('cats');
+  const base = TOUS.filter(c => filtre==="all" || (c.etat!=="Ne pas contacter" && c.etat!=="RDV"));
+  const n={}; base.forEach(c=>{ const k=c.cat||""; n[k]=(n[k]||0)+1; });
+  const cats=Object.keys(n).sort((a,b)=>rangCat(a)-rangCat(b)||a.localeCompare(b,"fr"));
+  if (catSel && !((catSel==="__aucune"?"":catSel) in n)) catSel="";
+  const mk=(k,l,nb)=>`<button class="chip${catSel===k?' on':''}" data-k="${esc(k)}">${esc(l)}<small>${nb}</small></button>`;
+  box.innerHTML = mk("","Toutes",base.length) + cats.map(k=>mk(k||"__aucune",k||"Sans catégorie",n[k])).join("");
+  box.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{ catSel=b.dataset.k; afficher(); });
+}
 
 function afficher(){
+  puces();
   const out = document.getElementById('out');
   out.innerHTML="";
-  // Une recherche porte sur tous les contacts, quel que soit le filtre.
+  // Une recherche porte sur tous les contacts, quel que soit le filtre d'état.
   const q = norm(document.getElementById('q').value);
-  const cat = document.getElementById('f-cat').value;
-  const vis = TOUS.filter(c => (!cat || c.cat===cat) && (q
+  const vis = TOUS.filter(c => (!catSel || (c.cat||"")===(catSel==="__aucune"?"":catSel)) && (q
     ? norm([c.nom,c.ville,c.mail,c.autres.join(" "),c.cat,c.etat].join(" ")).includes(q)
     : filtre==="all" || (c.etat!=="Ne pas contacter" && c.etat!=="RDV")));
   if (!vis.length){ out.innerHTML='<div class="msg">'+(q?"Aucun contact ne correspond à la recherche.":"Rien à afficher.")+'</div>'; return; }
-  const ordre=["À contacter","Pas de réponse","Mail envoyé","Relancé","RDV","Ne pas contacter"];
-  const groupes=[...ordre, ...new Set(vis.map(c=>c.etat||"").filter(e=>ordre.indexOf(e)<0))];
-  groupes.forEach(et => {
-    const grp = vis.filter(c => (c.etat||"")===et);
-    if (!grp.length) return;
+  const sect = (titre, grp) => {
     const h=document.createElement('div');
-    h.className='sec'; h.textContent=(et||"Sans état")+" — "+grp.length;
+    h.className='sec'; h.textContent=titre+" — "+grp.length;
     out.appendChild(h);
     grp.forEach(c => out.appendChild(carteFeuille(c)));
-  });
+  };
+  if (groupe==="cat"){
+    // Par catégorie ; dans chaque catégorie, les contacts à traiter d'abord.
+    const cats=[...new Set(vis.map(c=>c.cat||""))].sort((a,b)=>rangCat(a)-rangCat(b)||a.localeCompare(b,"fr"));
+    cats.forEach(k => sect(k||"Sans catégorie",
+      vis.filter(c=>(c.cat||"")===k).sort((a,b)=>rangEtat(a.etat)-rangEtat(b.etat))));
+  } else {
+    const groupes=[...ORDRE_ETAT, ...new Set(vis.map(c=>c.etat||"").filter(e=>ORDRE_ETAT.indexOf(e)<0))];
+    groupes.forEach(et => {
+      const grp = vis.filter(c => (c.etat||"")===et);
+      if (grp.length) sect(et||"Sans état", grp);
+    });
+  }
 }
 
 function stats(){
@@ -708,11 +736,6 @@ async function lire(){
 function montrer(csv){
   TOUS = parse(csv).map(prepare).filter(c => !(c.k && c.k.masque));
   if (!TOUS.length) throw new Error("aucune ligne trouvée dans la feuille");
-  const sel = document.getElementById('f-cat'), actuel = sel.value;
-  const cats = [...new Set(TOUS.map(c=>c.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
-  sel.innerHTML = '<option value="">Toutes catégories</option>'
-    + cats.map(k=>`<option value="${esc(k)}">${esc(k)}</option>`).join("");
-  sel.value = cats.indexOf(actuel)>=0 ? actuel : "";
   stats(); afficher();
 }
 
@@ -756,7 +779,8 @@ async function charger(){
 
 document.getElementById('b-refresh').onclick = charger;
 document.getElementById('q').oninput = afficher;
-document.getElementById('f-cat').onchange = afficher;
+document.getElementById('f-group').onclick = e => { groupe = groupe==="cat" ? "etat" : "cat";
+  e.currentTarget.textContent = "Classé par : " + (groupe==="cat" ? "catégorie" : "état"); afficher(); };
 document.getElementById('b-sheet').onclick = () => window.open(SHEET_URL,"_blank");
 document.getElementById('f-todo').onclick = () => { filtre="todo";
   document.getElementById('f-todo').classList.add('on');
