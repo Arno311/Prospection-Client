@@ -85,6 +85,10 @@
   <button id="f-todo" class="on">À contacter</button>
   <button id="f-all">Tout</button>
   <button id="b-sheet">Feuille ↗</button>
+  <select id="f-cat" aria-label="Filtrer par catégorie"
+    style="font:inherit;font-size:14px;font-weight:600;border-radius:9px;padding:10px 12px;min-height:44px;border:1px solid var(--line);background:#fff;color:var(--ink)">
+    <option value="">Toutes catégories</option>
+  </select>
 </div>
 <div id="horo" style="font-size:12.5px;color:var(--muted);margin:2px 0 0"></div>
 <input id="q" type="search" placeholder="Rechercher : nom, ville, e-mail, catégorie…"
@@ -225,6 +229,16 @@ Si vous cherchez un relais technique fiable entre Genève et Montreux, un simple
 Si vos clients vous demandent ce type de prestation, je serais heureux d'être votre contact. Un simple retour à ce message suffit, ou vous pouvez me joindre au 076 221 40 89.`,
   relance:"Je reste à votre disposition pour l'accord des pianos de vos concerts et événements, y compris le jour même, avant les balances."}
 ];
+
+// Écoles de scolarité obligatoire (publiques et privées), repérées par la colonne
+// « Catégorie » de la feuille = « École scolaire ».
+const ECOLE_SCOLAIRE = {cat:"École scolaire",
+  obj:"Accordeur et facteur de piano — entretien des pianos de votre établissement",
+  acc:"Dans un établissement scolaire, le piano de l'aula, de la salle de musique ou de la salle de rythmique sert à des dizaines d'élèves chaque semaine, souvent sans que personne n'en suive l'état : il se dérègle peu à peu, et ne retient l'attention que le jour d'une fête ou d'un spectacle.",
+  core:`Je vous propose un contrôle de vos pianos, offert et sans engagement : tenue de l'accord, état de la mécanique et des marteaux, réglages, avec un rapport écrit qui distingue ce qui est urgent de ce qui peut attendre, et le coût estimé de chaque intervention. Je peux aussi assurer un accord ponctuel avant une fête de fin d'année, un concert ou une cérémonie.
+
+Je m'adapte à vos horaires, en dehors des heures de cours ou pendant les vacances scolaires. Si vous n'êtes pas la bonne personne pour ce message, n'hésitez pas à le transmettre à la personne compétente (direction, conciergerie, service des bâtiments). Un simple retour à ce message suffit, ou vous pouvez me joindre au 076 221 40 89.`,
+  relance:"Ma proposition tient toujours : un contrôle de vos pianos, offert et sans engagement, ou un accord ponctuel avant une fête ou un spectacle de votre établissement."};
 
 function cible(c){
   const t = norm(c.nom + " " + c.info);
@@ -455,6 +469,7 @@ function parse(csv){
   const pos = (n, p) => { const i = cols.indexOf(n); return i>=0 ? i : p; };
   const iNom=pos("nom",0), iTel=pos("numero",1), iMail=pos("mail",2),
         iMail2=pos("mail 2",3), iVille=pos("ville",4), iEtat=pos("etat",5),
+        iCat=pos("categorie", 6),
         iRep=pos("reponse", cols[7] ? -1 : 7);
   const out=[];
   for (let i=head+1;i<rows.length;i++){
@@ -468,6 +483,8 @@ function parse(csv){
       mail:mails[0]||"", autres:mails.slice(1),
       info:[m1.reste,m2.reste].filter(Boolean).join(" — "),
       etat:(c[iEtat]||"").trim(),
+      // Colonne « Catégorie » de la feuille (vide pour les anciennes lignes).
+      catFeuille:(c[iCat]||"").trim(),
       // Chaque enregistrement CSV correspond à une ligne de la feuille (ligne i+1).
       celluleEtat:String.fromCharCode(65+iEtat) + (i+1),
       rep:iRep>=0 ? (c[iRep]||"").trim() : "" });
@@ -479,8 +496,26 @@ function prepare(r){
   const c = Object.assign({}, r);
   c.relance = ["Mail envoyé","Relancé","Pas de réponse"].indexOf(c.etat)>=0;
   const site = c.info.match(RE_SITE);
-  c.e = enrichir(c.nom);
-  if (c.e){
+  const scolaire = norm(c.catFeuille) === "ecole scolaire";
+  c.e = scolaire ? null : enrichir(c.nom);
+  if (scolaire){
+    const k = ECOLE_SCOLAIRE;
+    c.cat = k.cat;
+    c.obj = c.relance ? "Re : " + k.obj : k.obj;
+    c.texte = c.relance ? relanceCible(k.relance) : `Bonjour,
+
+Je m'appelle Arnaud Cormary, je suis accordeur et facteur de piano à l'Atelier Piano Léman.
+
+${k.acc}
+
+${k.core}
+
+${SIG}`;
+    c.surligne = c.relance ? null : k.acc;
+    c.contact = site ? (/^http/.test(site[0])?site[0]:"https://"+site[0]) : "";
+    c.note = c.mail ? "Accroche « École scolaire » : vérifiez qu'un piano existe bien dans l'établissement avant l'envoi."
+      : "Aucune adresse dans la feuille — " + (c.contact ? "passer par la page de contact" : "à compléter") + (c.tel ? ", ou appeler au " + c.tel : "") + ".";
+  } else if (c.e){
     c.cat = c.e.cat;
     c.obj = c.relance ? "Re : " + c.e.obj : c.e.obj;
     c.texte = c.relance ? RELANCE_PRESTIGE : c.e.body(c.e);
@@ -622,9 +657,10 @@ function afficher(){
   out.innerHTML="";
   // Une recherche porte sur tous les contacts, quel que soit le filtre.
   const q = norm(document.getElementById('q').value);
-  const vis = TOUS.filter(c => q
+  const cat = document.getElementById('f-cat').value;
+  const vis = TOUS.filter(c => (!cat || c.cat===cat) && (q
     ? norm([c.nom,c.ville,c.mail,c.autres.join(" "),c.cat,c.etat].join(" ")).includes(q)
-    : filtre==="all" || (c.etat!=="Ne pas contacter" && c.etat!=="RDV"));
+    : filtre==="all" || (c.etat!=="Ne pas contacter" && c.etat!=="RDV")));
   if (!vis.length){ out.innerHTML='<div class="msg">'+(q?"Aucun contact ne correspond à la recherche.":"Rien à afficher.")+'</div>'; return; }
   const ordre=["À contacter","Pas de réponse","Mail envoyé","Relancé","RDV","Ne pas contacter"];
   const groupes=[...ordre, ...new Set(vis.map(c=>c.etat||"").filter(e=>ordre.indexOf(e)<0))];
@@ -672,6 +708,11 @@ async function lire(){
 function montrer(csv){
   TOUS = parse(csv).map(prepare).filter(c => !(c.k && c.k.masque));
   if (!TOUS.length) throw new Error("aucune ligne trouvée dans la feuille");
+  const sel = document.getElementById('f-cat'), actuel = sel.value;
+  const cats = [...new Set(TOUS.map(c=>c.cat).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"fr"));
+  sel.innerHTML = '<option value="">Toutes catégories</option>'
+    + cats.map(k=>`<option value="${esc(k)}">${esc(k)}</option>`).join("");
+  sel.value = cats.indexOf(actuel)>=0 ? actuel : "";
   stats(); afficher();
 }
 
@@ -715,6 +756,7 @@ async function charger(){
 
 document.getElementById('b-refresh').onclick = charger;
 document.getElementById('q').oninput = afficher;
+document.getElementById('f-cat').onchange = afficher;
 document.getElementById('b-sheet').onclick = () => window.open(SHEET_URL,"_blank");
 document.getElementById('f-todo').onclick = () => { filtre="todo";
   document.getElementById('f-todo').classList.add('on');
