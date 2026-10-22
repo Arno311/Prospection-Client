@@ -1,143 +1,333 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="auto">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#8a5a2b">
+<meta name="theme-color" content="#090b10">
 <title>Prospection — Atelier Piano Léman</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎹</text></svg>">
 <style>
-  :root{ color-scheme: light;
-    --bg:#f6f5f2; --card:#fff; --ink:#1c1c1a; --muted:#6b6a66;
-    --line:#e3e1db; --accent:#8a5a2b; --accent-soft:#f3ebe2;
-    --ok:#2f7a4a; --warn:#b3541e; }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  :root{ color-scheme:dark;
+    --bg:#090b10; --s1:#10131a; --s2:#161a23; --s3:#1e232e; --line:#242a37; --line2:#313848;
+    --ink:#eef1f7; --muted:#8c95a8; --dim:#5f6879;
+    --accent:#6ea8ff; --accent-ink:#06101f; --accent-soft:rgba(110,168,255,.14);
+    --ok:#34d399; --warn:#fbbf24; --bad:#f87171; --shadow:0 12px 34px rgba(0,0,0,.4); }
+  @media (prefers-color-scheme:light){
+    :root[data-theme=auto]{ color-scheme:light;
+      --bg:#f2f4f8; --s1:#fff; --s2:#f7f8fb; --s3:#eceff5; --line:#e2e6ee; --line2:#cfd5e1;
+      --ink:#11151d; --muted:#5b6478; --dim:#8c95a8;
+      --accent:#2563eb; --accent-ink:#fff; --accent-soft:rgba(37,99,235,.10);
+      --ok:#059669; --warn:#b45309; --bad:#dc2626; --shadow:0 12px 30px rgba(20,30,60,.12); } }
+  :root[data-theme=light]{ color-scheme:light;
+      --bg:#f2f4f8; --s1:#fff; --s2:#f7f8fb; --s3:#eceff5; --line:#e2e6ee; --line2:#cfd5e1;
+      --ink:#11151d; --muted:#5b6478; --dim:#8c95a8;
+      --accent:#2563eb; --accent-ink:#fff; --accent-soft:rgba(37,99,235,.10);
+      --ok:#059669; --warn:#b45309; --bad:#dc2626; --shadow:0 12px 30px rgba(20,30,60,.12); }
+
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{background:var(--bg)}
   body{margin:0;background:var(--bg);color:var(--ink);
-    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    padding-bottom:env(safe-area-inset-bottom)}
-  .wrap{max-width:900px;margin:0 auto;padding:20px 14px 70px}
-  h1{font-size:21px;margin:0 0 4px;letter-spacing:-.02em}
-  .sub{color:var(--muted);font-size:13.5px;margin:0}
-  .bar{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 6px;align-items:center}
-  button{font:inherit;font-size:14px;font-weight:600;border-radius:9px;padding:10px 14px;
-    border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;min-height:44px}
+    font:15px/1.55 -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
+  [hidden]{display:none!important}
+  button{font:inherit;color:inherit;cursor:pointer}
   button:active{transform:scale(.98)}
-  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-  button.done{background:var(--ok)!important;border-color:var(--ok)!important;color:#fff!important}
-  button.on{background:var(--accent-soft);border-color:#dcc4a8;color:var(--accent)}
-  .chips{display:flex;gap:6px;overflow-x:auto;margin:10px -14px 0;padding:2px 14px 6px;
-    scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  h2,h3{margin:0}
+
+  /* ——— barre du haut ——— */
+  .top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;
+    gap:10px;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));
+    background:color-mix(in srgb,var(--bg) 86%,transparent);backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .logo{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;flex:none;
+    background:linear-gradient(135deg,var(--accent),#8b5cf6);color:#fff;font-size:18px;font-weight:700}
+  .brand .t{font-weight:700;font-size:16px;letter-spacing:-.01em;line-height:1.2}
+  .brand .s{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .s .live{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px}
+  .s .stale{background:var(--warn)}
+  .acts{display:flex;gap:6px;flex:none}
+  .icon{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);background:var(--s1);
+    display:grid;place-items:center;font-size:17px;color:var(--muted)}
+  .icon:hover{color:var(--ink);border-color:var(--line2)}
+  .icon.spin{animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .wrap{max-width:980px;margin:0 auto;padding:16px 16px 90px}
+
+  /* ——— tableau de bord ——— */
+  .dash{display:grid;grid-template-columns:1.25fr 1fr 1fr 1fr;gap:10px}
+  .tile{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:14px 15px;min-width:0}
+  .tile .k{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:600}
+  .tile .v{font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.15;margin-top:3px}
+  .tile .n{font-size:12px;color:var(--muted);margin-top:1px}
+  .tile.goal{display:flex;align-items:center;gap:13px}
+  .ring{width:62px;height:62px;flex:none;position:relative}
+  .ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+  .ring .bg{stroke:var(--s3)} .ring .fg{stroke:var(--accent);transition:stroke-dasharray .5s}
+  .ring.full .fg{stroke:var(--ok)}
+  .ring b{position:absolute;inset:0;display:grid;place-items:center;font-size:15px;font-weight:700}
+  .tile.click{cursor:pointer;text-align:left;transition:border-color .15s}
+  .tile.click:hover{border-color:var(--line2)}
+  .tile.click.on{border-color:var(--accent);background:var(--accent-soft)}
+  .pipe{margin-top:10px;background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:13px 15px}
+  .pipe .bar{display:flex;height:9px;border-radius:9px;overflow:hidden;background:var(--s3);gap:2px}
+  .pipe .bar i{display:block;height:100%;min-width:3px}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:12px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend em{width:8px;height:8px;border-radius:50%;display:inline-block}
+  .legend b{color:var(--ink);font-weight:650}
+
+  .cta{width:100%;margin-top:12px;min-height:54px;border:0;border-radius:15px;font-weight:700;font-size:16px;
+    background:linear-gradient(135deg,var(--accent),#7c8cff);color:var(--accent-ink);
+    box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 30%,transparent)}
+  .cta small{font-weight:600;opacity:.75;margin-left:6px}
+  .cta:disabled{opacity:.45;box-shadow:none;cursor:default}
+
+  /* ——— outils ——— */
+  .tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;align-items:center}
+  .seg{display:inline-flex;background:var(--s1);border:1px solid var(--line);border-radius:12px;padding:3px;gap:2px}
+  .seg button{border:0;background:none;padding:8px 14px;border-radius:9px;font-size:13.5px;font-weight:600;
+    color:var(--muted);min-height:36px}
+  .seg button.on{background:var(--s3);color:var(--ink)}
+  .ghost{border:1px solid var(--line);background:var(--s1);border-radius:12px;padding:8px 13px;min-height:42px;
+    font-size:13.5px;font-weight:600;color:var(--muted)}
+  .ghost:hover{color:var(--ink);border-color:var(--line2)}
+  #q{width:100%;margin-top:10px;font:inherit;font-size:16px;padding:11px 14px;min-height:46px;color:var(--ink);
+    border:1px solid var(--line);border-radius:13px;background:var(--s1);outline:none}
+  #q::placeholder{color:var(--dim)}
+  #q:focus,.field input:focus,.field select:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  .chips{display:flex;gap:7px;overflow-x:auto;margin:10px -16px 0;padding:2px 16px 6px;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
-  .chip{flex:none;min-height:36px;padding:6px 12px;font-size:13px;border-radius:20px;font-weight:600}
-  .chip small{font-weight:600;opacity:.7;margin-left:4px}
-  .stats{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);
-    background:var(--accent-soft);border:1px solid #e6d7c6;border-radius:10px;
-    padding:10px 13px;margin:12px 0 4px}
-  .stats b{color:var(--accent);font-size:15px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
-    margin-bottom:10px;overflow:hidden}
-  .head{display:flex;align-items:center;gap:10px;padding:14px;cursor:pointer;user-select:none}
-  .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .chip{flex:none;border:1px solid var(--line);background:var(--s1);color:var(--muted);border-radius:30px;
+    padding:6px 13px;min-height:36px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:6px}
+  .chip small{font-weight:650;opacity:.7}
+  .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+
+  .sec{display:flex;align-items:center;gap:8px;font-size:12px;text-transform:uppercase;letter-spacing:.08em;
+    color:var(--muted);font-weight:700;margin:24px 2px 10px}
+  .sec::after{content:"";flex:1;height:1px;background:var(--line)}
+  .sec b{color:var(--ink)}
+
+  /* ——— fiches ——— */
+  .card{background:var(--s1);border:1px solid var(--line);border-left:3px solid var(--st,var(--line2));
+    border-radius:14px;margin-bottom:8px;overflow:hidden;transition:border-color .15s}
+  .card:hover{border-color:var(--line2);border-left-color:var(--st)}
+  .head{display:flex;align-items:center;gap:11px;padding:12px 14px;cursor:pointer;user-select:none}
   .who{flex:1;min-width:0}
   .nm{font-weight:650;font-size:15px;line-height:1.35}
   .mt{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .tag{font-size:11px;font-weight:650;padding:3px 8px;border-radius:20px;flex:none;white-space:nowrap}
-  .chev{color:var(--muted);font-size:11px;flex:none;transition:transform .2s}
+  .pill{font-size:11.5px;font-weight:650;padding:3px 9px;border-radius:20px;flex:none;white-space:nowrap}
+  .badge{font-size:11px;font-weight:650;padding:2px 8px;border-radius:20px;flex:none;white-space:nowrap;
+    background:var(--s3);color:var(--muted)}
+  .badge.ok{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+  .badge.warn{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+  .chev{color:var(--dim);font-size:11px;flex:none;transition:transform .2s}
   .card.open .chev{transform:rotate(90deg)}
-  .body{display:none;padding:0 14px 14px;border-top:1px solid var(--line)}
+  .body{display:none;padding:2px 14px 14px;border-top:1px solid var(--line)}
   .card.open .body{display:block}
-  .lab{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin:13px 0 4px}
-  .val{background:#faf9f6;border:1px solid var(--line);border-radius:8px;padding:10px 11px;
-    font-size:14px;word-break:break-word}
-  pre.txt{background:#faf9f6;border:1px solid var(--line);border-radius:8px;padding:13px;margin:0;
-    white-space:pre-wrap;font:14px/1.62 inherit;outline:none;word-break:break-word}
-  pre.txt:focus{background:#fff;border-color:var(--accent);box-shadow:0 0 0 3px rgba(138,90,43,.10)}
-  mark{background:#fdf1c9;padding:1px 2px;border-radius:3px}
-  .flag{margin-top:11px;font-size:13px;color:var(--warn);background:#fdf3ec;
-    border:1px solid #f2ddcd;border-radius:8px;padding:9px 11px}
-  .btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
-  .btns button{flex:1 1 auto;min-width:120px}
-  /* 16px minimum : en dessous, Safari iOS zoome sur le champ */
-  #q{width:100%;font:inherit;font-size:16px;margin:12px 0 0;padding:10px 13px;min-height:44px;
-    border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);outline:none}
-  #q:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(138,90,43,.10)}
-  .sec{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
-    margin:26px 0 11px;padding-bottom:7px;border-bottom:1px solid var(--line)}
-  .msg{padding:30px 4px;color:var(--muted);font-size:14px}
-  .err{background:#fdf3ec;border:1px solid #f2ddcd;color:var(--warn);
-    border-radius:10px;padding:14px;font-size:14px;line-height:1.65}
-  .err ol{margin:10px 0 0;padding-left:22px}
-  .err li{margin:5px 0}
-  footer{margin-top:34px;font-size:12.5px;color:var(--muted);
-    border-top:1px solid var(--line);padding-top:16px}
+  .lab{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);font-weight:650;margin:14px 0 5px}
+  .val{background:var(--s2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;word-break:break-word}
+  .val a{color:var(--accent);text-decoration:none}
+  pre.txt{background:var(--s2);border:1px solid var(--line);border-radius:12px;padding:14px;margin:0;
+    white-space:pre-wrap;font:14.5px/1.65 inherit;outline:none;word-break:break-word;color:var(--ink)}
+  pre.txt:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+  mark{background:color-mix(in srgb,var(--warn) 26%,transparent);color:inherit;padding:1px 2px;border-radius:4px}
+  .flag{margin-top:12px;font-size:13px;color:var(--warn);border:1px solid color-mix(in srgb,var(--warn) 35%,transparent);
+    background:color-mix(in srgb,var(--warn) 10%,transparent);border-radius:11px;padding:9px 12px}
+  .btns{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+  .btns button{flex:1 1 auto;min-width:130px;min-height:44px;border-radius:11px;border:1px solid var(--line2);
+    background:var(--s2);font-size:14px;font-weight:600;padding:9px 13px}
+  .btns button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .btns button.done{background:var(--ok)!important;border-color:var(--ok)!important;color:#04150d!important}
+  .btns button.soft{color:var(--muted)}
+
+  .msg{padding:34px 4px;color:var(--muted);font-size:14px;text-align:center}
+  .err{background:color-mix(in srgb,var(--bad) 10%,transparent);border:1px solid color-mix(in srgb,var(--bad) 35%,transparent);
+    color:var(--ink);border-radius:14px;padding:16px;font-size:14px;line-height:1.65}
+  .err ol{margin:10px 0 0;padding-left:22px} .err li{margin:5px 0}
+  footer{margin-top:34px;font-size:12.5px;color:var(--dim);border-top:1px solid var(--line);padding-top:16px}
   a{color:var(--accent)}
-  @media (max-width:520px){
-    .wrap{padding:16px 11px 60px}
-    h1{font-size:19px}
+
+  /* ——— session ——— */
+  .sess{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column}
+  .sess-top{display:flex;align-items:center;gap:12px;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));
+    border-bottom:1px solid var(--line)}
+  .prog{flex:1;min-width:0}
+  .prog .bar{height:6px;border-radius:6px;background:var(--s3);overflow:hidden}
+  .prog .bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+  .prog span{display:block;font-size:12px;color:var(--muted);margin-top:5px}
+  .sess-main{flex:1;overflow:auto;padding:18px 16px 24px;max-width:760px;width:100%;margin:0 auto}
+  .sess-main h2{font-size:24px;letter-spacing:-.02em;line-height:1.25;margin:6px 0 8px}
+  .sess-cat{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--accent);font-weight:700}
+  .sess-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .sess-bar{display:flex;gap:8px;padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom));
+    border-top:1px solid var(--line);background:var(--s1)}
+  .sess-bar button{flex:1;min-height:50px;border-radius:13px;border:1px solid var(--line2);background:var(--s2);
+    font-weight:650;font-size:15px}
+  .sess-bar button.go{flex:2;background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .end{text-align:center;padding:60px 10px}
+  .end .big{font-size:54px}
+
+  /* ——— réglages ——— */
+  .sheet{position:fixed;inset:0;z-index:60;display:flex;justify-content:flex-end;background:rgba(3,6,12,.55)}
+  .panel{width:min(440px,100%);height:100%;background:var(--bg);border-left:1px solid var(--line);
+    overflow:auto;padding:18px 18px 40px;box-shadow:var(--shadow)}
+  .panel h2{font-size:19px;margin-bottom:4px}
+  .panel .sub{color:var(--muted);font-size:13px;margin:0 0 6px}
+  .group{margin-top:20px}
+  .group>.gt{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--dim);font-weight:700;margin-bottom:8px}
+  .field{display:block;margin-bottom:11px}
+  .field span{display:block;font-size:13px;color:var(--muted);margin-bottom:5px}
+  .field input,.field select{width:100%;font:inherit;font-size:16px;color:var(--ink);background:var(--s1);
+    border:1px solid var(--line);border-radius:11px;padding:10px 12px;min-height:44px;outline:none}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--s1);
+    border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:7px;font-size:14px}
+  .row small{display:block;color:var(--muted);font-size:12px}
+  .sw{position:relative;width:44px;height:26px;flex:none}
+  .sw input{opacity:0;position:absolute;inset:0;width:100%;height:100%;margin:0;cursor:pointer;z-index:1}
+  .sw i{position:absolute;inset:0;border-radius:26px;background:var(--s3);border:1px solid var(--line2);transition:.15s}
+  .sw i::after{content:"";position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:var(--muted);transition:.15s}
+  .sw input:checked+i{background:var(--accent);border-color:var(--accent)}
+  .sw input:checked+i::after{left:20px;background:#fff}
+  .danger{width:100%;min-height:46px;border-radius:12px;border:1px solid color-mix(in srgb,var(--bad) 45%,transparent);
+    background:none;color:var(--bad);font-weight:650;margin-top:6px}
+
+  .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:80;
+    background:var(--ink);color:var(--bg);border-radius:14px;padding:11px 14px;display:flex;gap:12px;align-items:center;
+    font-size:14px;font-weight:550;max-width:min(560px,calc(100% - 24px));box-shadow:var(--shadow)}
+  .toast button{border:0;background:none;color:var(--accent);font-weight:700;white-space:nowrap;padding:4px 2px}
+  :root[data-theme=dark] .toast button,:root[data-theme=auto] .toast button{filter:brightness(.6) saturate(1.4)}
+  :root[data-theme=light] .toast button{filter:none}
+
+  @media (max-width:760px){
+    .dash{grid-template-columns:1fr 1fr}
+    .tile.goal{grid-column:1 / -1}
+    .tile .v{font-size:25px}
     .btns button{flex:1 1 100%}
-    .tag{display:none}
+    .pill{display:none}
+    .sess-main h2{font-size:21px}
   }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<h1>Prospection — Atelier Piano Léman</h1>
-<p class="sub">Lecture directe de votre feuille Google · accessible partout</p>
+<header class="top">
+  <div class="brand">
+    <div class="logo">♪</div>
+    <div><div class="t">Prospection</div><div class="s" id="horo">Lecture de la feuille…</div></div>
+  </div>
+  <div class="acts">
+    <button class="icon" id="b-refresh" aria-label="Actualiser" title="Actualiser">↻</button>
+    <button class="icon" id="b-sheet" aria-label="Ouvrir la feuille Google" title="Ouvrir la feuille">▦</button>
+    <button class="icon" id="b-cfg" aria-label="Réglages" title="Réglages">⚙</button>
+  </div>
+</header>
 
-<div class="bar">
-  <button class="primary" id="b-refresh">↻ Actualiser</button>
-  <button id="f-todo" class="on">À contacter</button>
-  <button id="f-all">Tout</button>
-  <button id="b-sheet">Feuille ↗</button>
-  <button id="f-group" title="Changer le classement">Classé par : catégorie</button>
-</div>
-<div id="cats" class="chips"></div>
-<div id="horo" style="font-size:12.5px;color:var(--muted);margin:2px 0 0"></div>
-<input id="q" type="search" placeholder="Rechercher : nom, ville, e-mail, catégorie…"
-  autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+<main class="wrap">
+  <section class="dash" id="dash"></section>
+  <div class="pipe" id="pipe" hidden></div>
+  <button class="cta" id="b-session" disabled>▶ Lancer une session</button>
 
-<div class="stats" id="stats" style="display:none"></div>
-<div id="out"><div class="msg">Lecture de la feuille…</div></div>
+  <div class="tools">
+    <div class="seg" id="seg-vue">
+      <button data-v="liste" class="on">Liste</button>
+      <button data-v="relances">Relances</button>
+    </div>
+    <div class="seg" id="seg-etat">
+      <button id="f-todo" class="on">À traiter</button>
+      <button id="f-all">Tout</button>
+    </div>
+    <button class="ghost" id="f-group">Classé par : catégorie</button>
+  </div>
+  <input id="q" type="search" placeholder="Rechercher : nom, ville, e-mail, catégorie…"
+    autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <div id="cats" class="chips"></div>
 
+  <div id="out"><div class="msg">Lecture de la feuille…</div></div>
 
-<footer>
-  Les états se modifient dans Google Sheets — cette page les relit à chaque ouverture.<br>
-  Les mails s'arrêtent à « Bien cordialement » : votre signature automatique prend le relais.
-</footer>
-</div>
+  <footer>
+    L'état des contacts se modifie dans Google Sheets : l'app le relit à chaque ouverture.
+    Ton suivi du jour (mails préparés, « plus tard ») reste sur cet appareil.
+  </footer>
+</main>
+
+<div id="sess" class="sess" hidden></div>
+<div id="cfg" class="sheet" hidden></div>
+<div id="toast" class="toast" hidden></div>
 
 <script>
+/* ═══════════════ Données ═══════════════ */
 const FILE_ID   = "14t2kxCWcNFCVLp8YmYTNqoWSov9N7tMHnORBNQFShvs";
 const SHEET_URL = "https://docs.google.com/spreadsheets/d/" + FILE_ID + "/edit";
 // Export CSV brut de « Feuille 1 » (gid 0) : contrairement à gviz, pas de
 // conversion de type par colonne qui viderait des cellules.
-const CSV_URL   = "https://docs.google.com/spreadsheets/d/" + FILE_ID +
-                  "/export?format=csv&gid=0";
+const CSV_URL   = "https://docs.google.com/spreadsheets/d/" + FILE_ID + "/export?format=csv&gid=0";
 const CACHE_KEY = "prospection.derniere-lecture";
+const CFG_KEY   = "prospection.reglages";
+const LOG_KEY   = "prospection.suivi";
 
-const COULEURS = {
-  "À contacter":["#8a5a2b","#f3ebe2"], "Mail envoyé":["#2b5f8a","#e3eef8"],
-  "Relancé":["#8a6f1e","#fdf1c9"], "RDV":["#2f7a4a","#d8f0e2"],
-  "Pas de réponse":["#6b6a66","#eceae5"], "Ne pas contacter":["#a33","#f9dcdc"],
-  "":["#6b6a66","#eceae5"] };
+const ETATS = {           // [couleur, libellé court]
+  "À contacter":"#3b82f6", "Mail envoyé":"#8b5cf6", "Relancé":"#d97706",
+  "RDV":"#10b981", "Pas de réponse":"#64748b", "Ne pas contacter":"#ef4444", "":"#64748b" };
+const ORDRE_ETAT = ["À contacter","Pas de réponse","Mail envoyé","Relancé","RDV","Ne pas contacter"];
+const ORDRE_CAT  = ["École scolaire","École de musique","Hôtel","Conciergerie","Assurance",
+                    "Événementiel","Salle / Culture","Navigation","Institution","Revendeur"];
+const rangEtat = e => { const i=ORDRE_ETAT.indexOf(e||""); return i<0?99:i; };
+const rangCat  = k => { const i=ORDRE_CAT.indexOf(k||""); return k?(i<0?50:i):99; };
+const couleur  = e => ETATS[e] || ETATS[""];
 
+/* ═══════════════ Réglages et suivi (stockés sur l'appareil) ═══════════════ */
+const DEFAUT = { nom:"Arnaud Cormary", tel:"076 221 40 89", fin:"Bien cordialement,",
+  objectif:10, relanceJ:7, theme:"auto", sansMail:false, revendeurs:false,
+  catsOff:[], filtre:"todo", groupe:"cat" };
+let cfg = Object.assign({}, DEFAUT), LOG = {};
+try{ cfg = Object.assign({}, DEFAUT, JSON.parse(localStorage.getItem(CFG_KEY)||"{}")); }catch(_){}
+try{ LOG = JSON.parse(localStorage.getItem(LOG_KEY)||"{}") || {}; }catch(_){ LOG = {}; }
+const saveCfg = () => { try{ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }catch(_){} };
+const saveLog = () => { try{ localStorage.setItem(LOG_KEY, JSON.stringify(LOG)); }catch(_){} };
+function appliquerTheme(){
+  document.documentElement.dataset.theme = cfg.theme;
+  document.querySelector('meta[name=theme-color]').content =
+    cfg.theme==="light" || (cfg.theme==="auto" && matchMedia("(prefers-color-scheme: light)").matches) ? "#f2f4f8" : "#090b10";
+}
+
+/* ═══════════════ Utilitaires ═══════════════ */
+const norm = s => (s||"").toLowerCase().normalize("NFD")
+  .replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim();
+const esc = s => (s||"").replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const $ = id => document.getElementById(id);
+const heure = d => d.toLocaleTimeString('fr-CH',{hour:'2-digit',minute:'2-digit'});
+const jour  = d => d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
+const SIG = () => cfg.fin;
+const TEL = () => cfg.tel;
+
+/* ═══════════════ Textes des mails ═══════════════
+   Ton : simple, chaleureux, d'égal à égal. Je me présente comme un partenaire
+   qui accompagne la musique, pas comme un prestataire qui démarche. */
+
+const intro = () => `Bonjour,
+
+Je suis ${cfg.nom}, accordeur et facteur de piano à l'Atelier Piano Léman, à Le Vaud, sur la Côte.`;
+
+// Accroches personnalisées (écoles de musique déjà identifiées)
 const ACCROCHES = {
-  "arca musica":"J'interviens régulièrement sur la Côte et à Préverenges. Un piano d'école, joué plusieurs heures par jour, se dérègle bien plus vite qu'un instrument de salon — et rarement de façon visible.",
-  "fa perche":"Je passe régulièrement dans la région de Morges. Ce qui distingue un piano d'école, c'est le rythme : sollicité sans relâche, il demande un suivi que l'on n'imagine pas pour un instrument de particulier.",
-  "cresecendo piano":"Votre école étant entièrement centrée sur le piano, vous savez mieux que quiconque à quelle vitesse un instrument travaillé quotidiennement se désaccorde et se dérègle.",
-  "crescendo piano":"Votre école étant entièrement centrée sur le piano, vous savez mieux que quiconque à quelle vitesse un instrument travaillé quotidiennement se désaccorde et se dérègle.",
-  "yamaha music school":"Une école du réseau Yamaha dispose d'un parc conséquent et d'exigences précises sur la tenue des instruments — c'est exactement le type de suivi sur lequel j'interviens.",
-  "apolline":"J'interviens régulièrement sur Lausanne auprès de structures d'enseignement musical. Un piano travaillé quotidiennement vieillit autrement qu'un instrument de salon : l'usure y est plus rapide, et souvent plus discrète.",
-  "empully":"J'interviens régulièrement sur Pully et Lausanne. Dans une école, ce n'est pas tant l'âge du piano qui compte que le nombre d'heures qu'il encaisse — et c'est ce rythme-là qui dicte la fréquence d'entretien.",
-  "musique la source":"J'interviens régulièrement sur Lausanne auprès des écoles de musique. Un instrument sollicité plusieurs heures par jour perd son réglage progressivement, sans que personne ne s'en aperçoive vraiment jusqu'au jour où il sonne faux.",
-  "hl piano studio":"Dans un studio entièrement dédié au piano, l'état des instruments fait tout : je n'ai pas besoin de vous expliquer ce que coûte un piano mal réglé pendant un cours.",
-  "gregturini":"J'interviens régulièrement entre Cugy et Lausanne. Un piano d'enseignement subit en une année ce qu'un instrument de particulier traverse en dix — c'est ce qui rend son suivi si particulier.",
-  "emnyon":"Je me déplace régulièrement sur La Côte, jusqu'à Nyon. Dans une école, chaque piano encaisse des dizaines d'heures de jeu par semaine : son accord et sa mécanique bougent à un tout autre rythme.",
-  "emvr":"Votre école étant répartie sur plusieurs sites, l'entretien des pianos devient vite difficile à suivre : les instruments les plus sollicités ne sont pas toujours ceux qu'on pense, et l'état du parc n'est presque jamais homogène d'un lieu à l'autre.",
-  "compagnie albertine":"Au-delà de l'entretien courant, je propose aussi l'accordage ponctuel avant une représentation ou une captation : c'est souvent à ce moment-là qu'un instrument révèle ses faiblesses.",
-  "ecomuse":"J'interviens régulièrement dans la région lausannoise auprès de structures d'enseignement musical. Un piano joué chaque jour ne demande pas le même entretien qu'un instrument de particulier : il se dérègle plus vite, et plus silencieusement.",
-  "eml":"Avec le nombre d'élèves que vous accueillez, vos pianos comptent probablement parmi les plus sollicités de la région — et ce sont précisément ceux dont l'accord et la mécanique bougent le plus vite."
+  "arca musica":"Je travaille régulièrement sur la Côte et du côté de Préverenges. Dans une école, le piano joue plusieurs heures par jour : il se dérègle bien plus vite que chez un particulier, et rarement de façon visible.",
+  "fa perche":"Je passe régulièrement dans la région de Morges. Ce qui change tout dans une école, c'est le rythme : un piano sollicité sans relâche demande un suivi qu'on n'imagine pas pour un instrument de particulier.",
+  "cresecendo piano":"Votre école est entièrement tournée vers le piano : vous savez mieux que personne à quelle vitesse un instrument joué tous les jours se désaccorde et se dérègle.",
+  "crescendo piano":"Votre école est entièrement tournée vers le piano : vous savez mieux que personne à quelle vitesse un instrument joué tous les jours se désaccorde et se dérègle.",
+  "yamaha music school":"Une école du réseau Yamaha a un parc de pianos conséquent et des attentes précises sur la tenue des instruments. C'est exactement le genre de suivi que j'aime faire.",
+  "apolline":"Je travaille régulièrement à Lausanne avec des structures d'enseignement de la musique. Un piano joué tous les jours ne vieillit pas comme un piano de salon : l'usure est plus rapide, et souvent plus discrète.",
+  "empully":"Je travaille régulièrement à Pully et Lausanne. Dans une école, ce n'est pas tant l'âge du piano qui compte que le nombre d'heures qu'il encaisse, et c'est ce rythme qui dicte la fréquence d'entretien.",
+  "musique la source":"Je travaille régulièrement à Lausanne avec des écoles de musique. Un piano joué plusieurs heures par jour perd son réglage petit à petit, sans que personne ne s'en rende vraiment compte, jusqu'au jour où il sonne faux.",
+  "hl piano studio":"Dans un studio entièrement dédié au piano, l'état des instruments change tout. Je n'ai pas besoin de vous expliquer ce que coûte un piano mal réglé pendant un cours.",
+  "gregturini":"Je me déplace régulièrement entre Cugy et Lausanne. Un piano d'enseignement vit en un an ce qu'un piano de particulier vit en dix, et c'est ce qui rend son suivi si particulier.",
+  "emnyon":"Je me déplace régulièrement sur la Côte, jusqu'à Nyon. Dans une école, chaque piano encaisse des dizaines d'heures de jeu par semaine : son accord et sa mécanique bougent à un tout autre rythme.",
+  "emvr":"Votre école est répartie sur plusieurs sites, et l'entretien des pianos devient vite difficile à suivre : les instruments les plus sollicités ne sont pas toujours ceux qu'on croit, et le parc est rarement homogène d'un lieu à l'autre.",
+  "compagnie albertine":"Au-delà de l'entretien courant, je peux aussi venir accorder avant une représentation ou une captation. C'est souvent à ce moment-là qu'un piano montre ses faiblesses.",
+  "ecomuse":"Je travaille régulièrement dans la région lausannoise avec des structures d'enseignement de la musique. Un piano joué chaque jour ne demande pas le même entretien qu'un piano de particulier : il se dérègle plus vite, et plus discrètement.",
+  "eml":"Avec le nombre d'élèves que vous accueillez, vos pianos sont probablement parmi les plus sollicités de la région, et ce sont ceux dont l'accord et la mécanique bougent le plus vite."
 };
 
 const NOTES = {
@@ -149,267 +339,224 @@ const NOTES = {
   "eml":"Secrétariat joignable du lundi au vendredi, 10h–12h30. Un appel de suivi 3–4 jours après est très jouable."
 };
 
-const SIG = `Bien cordialement,`;
+const CORE = () => `Je ne viens pas vous vendre quelque chose : j'aimerais devenir la personne vers qui vous vous tournez pour vos pianos, pour que vos élèves jouent toujours sur des instruments qui sonnent juste.
 
-const CORE = `Je vous propose de réaliser un audit de vos instruments, offert et sans engagement. Pour chacun d'eux, j'examine la tenue de l'accord, l'état de la mécanique et des marteaux ainsi que les réglages, puis je vous remets un rapport écrit : ce qui est urgent, ce qui peut attendre, et le coût estimé de chaque intervention. Même sans suite de votre part, vous disposerez d'une vision claire de votre parc pour votre prochain budget.
+Pour commencer, je vous propose un contrôle de vos pianos, offert et sans engagement : l'accord, la mécanique, les marteaux, les réglages. Je vous remets ensuite un petit rapport écrit : ce qui est urgent, ce qui peut attendre, et ce que ça coûterait. Même sans suite, vous aurez une vision claire de votre parc pour votre prochain budget.
 
-Je m'adapte volontiers à vos horaires, y compris en dehors des plages de cours. Un simple retour à ce message suffit, ou vous pouvez me joindre au 076 221 40 89.`;
+Je m'adapte à vos horaires, y compris en dehors des cours. Un simple retour à ce message suffit, ou vous pouvez m'appeler au ${TEL()}.`;
 
-const RELANCE_BODY = `Bonjour,
+const relanceCorps = phrase => `Bonjour,
 
-Je me permets de revenir vers vous au sujet de mon message précédent — je sais à quel point ce type de demande passe facilement au second plan.
-
-Ma proposition tient toujours : je peux réaliser un audit de votre parc de pianos, offert et sans engagement de votre part.
-
-Si le sujet n'est pas d'actualité, dites-le-moi simplement, je n'insisterai pas.
-
-` + SIG;
-
-const RELANCE_PRESTIGE = `Bonjour,
-
-Je me permets de revenir vers vous au sujet de mon message précédent — je sais à quel point ce type de demande passe facilement au second plan.
-
-Je reste à votre disposition pour l'accord et l'entretien de vos pianos, y compris rapidement avant un événement.
-
-Si le sujet n'est pas d'actualité, dites-le-moi simplement, je n'insisterai pas.
-
-` + SIG;
-
-const CORE_HOTEL = `Un piano placé en salon ou en bar n'est jamais un simple élément de décor : c'est un instrument entendu chaque jour par une clientèle qui remarque tout, et le moindre décalage dans l'accord s'entend immédiatement dans ce genre de lieu.
-
-Si votre établissement dispose d'un tel piano, je me permets de me présenter simplement pour que vous sachiez que je suis là. Basé sur la Côte, je peux intervenir rapidement : un piano qui déraille avant un événement ne peut pas attendre huit jours. Je m'organise autour de vos horaires de service, tôt le matin ou en dehors des heures d'affluence, et je reste joignable pour toute urgence.
-
-Si ce n'est pas le bon interlocuteur pour ce message, n'hésitez pas à le transmettre à la personne compétente, ou à m'en excuser par avance.
-
-Je reste à votre entière disposition, au 076 221 40 89.`;
-
-const CORE_CONCIERGE = `Un piano n'est jamais un simple meuble : c'est un instrument qui se désaccorde en silence, et qu'on ne remarque souvent que lorsqu'il est déjà trop tard, au moment où un client s'assoit pour en jouer.
-
-Je me permets de me présenter aujourd'hui simplement pour que vous sachiez que je suis là. Ce que vos clients attendent d'un prestataire, c'est autant la maîtrise que la réactivité : je reste joignable directement, sans intermédiaire, et peux intervenir rapidement le jour où le besoin se présente — pour un accord, un entretien courant ou une réparation plus délicate. Je peux vous faire parvenir une présentation de mon parcours si cela peut vous être utile pour vos futures recommandations.
-
-Je reste à votre entière disposition, au 076 221 40 89.`;
-
-const CORE_BATEAU = `Si un piano se trouve à bord ou dans vos salons d'accueil, je vous propose un diagnostic complet de l'instrument, offert et sans engagement : tenue de l'accord, état de la mécanique, réglages, avec un rapport écrit. J'interviens en toute discrétion, calé sur vos horaires d'escale ou d'exploitation.
-
-Je reste à votre entière disposition au 076 221 40 89.`;
-
-const relanceCible = phrase => `Bonjour,
-
-Je me permets de revenir vers vous au sujet de mon message précédent — je sais à quel point ce type de demande passe facilement au second plan.
+Je reviens vers vous au sujet de mon message précédent. Je sais que ce genre de demande passe vite au second plan, pas de souci.
 
 ${phrase}
 
-Si le sujet n'est pas d'actualité, dites-le-moi simplement, je n'insisterai pas.
+Si ce n'est pas le bon moment, dites-le-moi simplement, je n'insisterai pas.
 
-` + SIG;
+${SIG()}`;
+const RELANCE_ECOLE   = () => relanceCorps("Ma proposition tient toujours : un premier contrôle de vos pianos, offert et sans engagement.");
+const RELANCE_PRESTIGE = () => relanceCorps("Je reste disponible pour l'accord et l'entretien de vos pianos, y compris rapidement avant un événement.");
 
-// Cibles hors écoles, reconnues par le nom ou les infos de la feuille
-// (la feuille n'a pas de colonne « catégorie »). L'ordre compte : premier trouvé.
+const CORE_HOTEL = () => `Un piano d'hôtel s'entend tous les jours, et vos clients remarquent tout de suite quand il sonne faux, même sans savoir pourquoi. Si votre établissement en a un, j'aimerais être la personne à qui vous pensez pour vous en occuper.
+
+Je suis installé sur la Côte et je peux intervenir vite, par exemple quand un piano déraille juste avant un événement. Je m'adapte à vos horaires de service (tôt le matin, ou en dehors des heures d'affluence) et je reste joignable en cas d'urgence.
+
+Si je ne m'adresse pas à la bonne personne, pourriez-vous transmettre ce message ? Merci d'avance.
+
+Vous pouvez me joindre au ${TEL()}.`;
+
+const CORE_CONCIERGE = () => `Un piano se dérègle en silence, et on le remarque souvent trop tard, au moment où quelqu'un s'assoit pour jouer. Pour vos clients, j'aimerais être un contact simple et fiable : je réponds directement, sans intermédiaire, et je peux intervenir vite pour un accord, un entretien ou une réparation plus délicate.
+
+Si ça peut vous aider pour vos recommandations, je vous envoie volontiers une présentation de mon parcours.
+
+Vous pouvez me joindre au ${TEL()}.`;
+
+const CORE_BATEAU = () => `Si un piano se trouve à bord ou dans vos salons, je vous propose un premier contrôle, offert et sans engagement : accord, mécanique, réglages, avec un rapport écrit. J'interviens discrètement, selon vos horaires d'escale ou d'exploitation.
+
+Vous pouvez me joindre au ${TEL()}.`;
+
+const ECOLE_SCOLAIRE = { cat:"École scolaire",
+  obj:"Un accordeur de piano près de chez vous, pour accompagner la musique à l'école",
+  acc:() => `Beaucoup d'écoles ont un piano, à l'aula, dans la salle de musique ou de rythmique, et c'est rarement quelqu'un dont c'est le métier qui s'en occupe. Il se dérègle doucement, et on s'en aperçoit le jour de la fête de fin d'année ou du spectacle.`,
+  core:() => `J'aimerais vous accompagner là-dessus, simplement : passer voir vos pianos, vous dire dans quel état ils sont, ce qui est urgent et ce qui peut attendre, puis m'en occuper ensuite si vous le souhaitez. Le premier contrôle est offert, sans engagement. Je peux aussi venir accorder juste avant une fête, un concert ou une cérémonie.
+
+Je m'organise selon vos horaires : en dehors des heures de cours, ou pendant les vacances. Et si vous n'êtes pas la bonne personne pour ce message, pourriez-vous le faire suivre à la direction ou à la conciergerie ? Merci d'avance.
+
+Un simple retour à ce message suffit, ou vous pouvez m'appeler au ${TEL()}.`,
+  relance:() => RELANCE_ECOLE() };
+
+// Cibles hors écoles, reconnues par le nom ou les infos de la feuille.
+// L'ordre compte : premier trouvé.
 const CIBLES = [
  {cat:"Assurance",
   re:/assuranc|mobiliere|\baxa\b|swiss life|helvetia|baloise|generali|allianz|\bcss\b|vaudoise/,
-  obj:"Expertise de pianos sinistrés — technicien indépendant en Suisse romande",
-  acc:"Lorsqu'un sinistre touche un piano — dégât d'eau, chute lors d'un déménagement, exposition à la chaleur — l'évaluation des dommages demande un œil de spécialiste : ce qui paraît superficiel peut avoir atteint la table d'harmonie ou la mécanique, et l'inverse est tout aussi fréquent.",
-  core:`Je vous propose mes services d'expertise pour vos dossiers impliquant un piano : constat sur place, évaluation des dommages et de la valeur de l'instrument, chiffrage de la remise en état ou constat de perte totale, le tout consigné dans un rapport écrit directement exploitable par vos gestionnaires. J'interviens dans toute la Suisse romande, dans des délais courts.
+  obj:"Expert piano en Suisse romande, pour vos dossiers de sinistre",
+  acc:() => "Quand un sinistre touche un piano (dégât d'eau, chute lors d'un déménagement, chaleur), l'évaluation demande un œil de spécialiste : ce qui paraît superficiel peut avoir touché la table d'harmonie ou la mécanique, et l'inverse arrive aussi.",
+  core:() => `Je vous propose mon aide d'expert pour vos dossiers avec un piano : constat sur place, évaluation des dommages et de la valeur de l'instrument, chiffrage de la remise en état ou constat de perte totale, le tout dans un rapport écrit que vos gestionnaires peuvent utiliser directement. J'interviens dans toute la Suisse romande, dans des délais courts.
 
-Si votre service fait appel à des experts externes pour ce type de dossier, je serais heureux de figurer parmi vos contacts. Un simple retour à ce message suffit, ou vous pouvez me joindre au 076 221 40 89.`,
-  relance:"Je reste à votre disposition pour l'expertise de pianos sinistrés : constat, évaluation des dommages et rapport écrit pour vos dossiers."},
- // masque:true → contacts lus dans la feuille mais non affichés dans l'app.
+Si votre service fait appel à des experts externes pour ce type de dossier, j'aimerais faire partie de vos contacts. Un simple retour à ce message suffit, ou vous pouvez m'appeler au ${TEL()}.`,
+  relance:() => relanceCorps("Je reste disponible pour l'expertise de pianos sinistrés : constat, évaluation des dommages et rapport écrit pour vos dossiers.")},
+ // masque:true → contacts lus dans la feuille mais non affichés (réglage « Afficher les revendeurs »).
  {cat:"Revendeur", masque:true,
   re:/thomann|music store|kirstein|session music|musik produktiv|kawai|yamaha music europe|klavier/,
-  obj:"Technicien piano partenaire en Suisse romande — mise en service et service après-vente",
-  acc:"Pour un revendeur, chaque piano livré en Suisse romande engage votre image bien après la vente : la mise en accord après livraison, les réglages sous garantie et le suivi des premiers mois se jouent loin de votre magasin.",
-  core:`Je vous propose d'intervenir comme technicien partenaire dans la région lémanique : accord de mise en service après livraison, interventions sous garantie, préparation d'instruments et suivi de vos clients sur place, avec un compte rendu après chaque intervention.
+  obj:"Technicien piano partenaire en Suisse romande",
+  acc:() => "Pour un revendeur, chaque piano livré en Suisse romande engage votre image bien après la vente : la mise en accord après livraison, les réglages sous garantie et le suivi des premiers mois se jouent loin de votre magasin.",
+  core:() => `Je vous propose d'être votre technicien partenaire dans la région lémanique : accord de mise en service après livraison, interventions sous garantie, préparation d'instruments et suivi de vos clients sur place, avec un compte rendu après chaque intervention.
 
-Si vous cherchez un relais technique fiable entre Genève et Montreux, un simple retour à ce message suffit, ou vous pouvez me joindre au 076 221 40 89.`,
-  relance:"Je reste à votre disposition comme technicien partenaire en Suisse romande, pour la mise en service et le suivi des pianos que vous livrez dans la région."},
+Si vous cherchez un relais technique fiable entre Genève et Montreux, un simple retour à ce message suffit, ou vous pouvez m'appeler au ${TEL()}.`,
+  relance:() => relanceCorps("Je reste disponible comme technicien partenaire en Suisse romande, pour la mise en service et le suivi des pianos que vous livrez dans la région.")},
  {cat:"Événementiel",
   re:/sono|evenement|event|audiovisuel|concert|orchestra|regisseur|son et lumiere|imersis|strobotech|raya sound|ppc concept|planner|calla concept|2vibes|dynam/,
-  obj:"Accordeur de piano pour vos concerts et événements — Suisse romande",
-  acc:"Sur un événement, le piano est souvent le seul instrument que personne sur place ne peut régler : un accord fait la veille ne tient pas toujours après un transport, un changement de salle ou des projecteurs qui chauffent la scène.",
-  core:`Je vous propose d'assurer l'accord des pianos de vos concerts, galas et événements : intervention sur place avant les balances, retouche entre deux passages si nécessaire, et contrôle rapide de la mécanique. Je m'adapte aux horaires de montage, tôt le matin ou tard le soir, et je reste joignable le jour J.
+  obj:"Accordeur de piano pour vos concerts et événements, en Suisse romande",
+  acc:() => "Sur un événement, le piano est souvent le seul instrument que personne sur place ne sait régler : un accord fait la veille ne tient pas toujours après un transport, un changement de salle ou des projecteurs qui chauffent la scène.",
+  core:() => `Je vous propose d'accorder les pianos de vos concerts, galas et événements : intervention sur place avant les balances, retouche entre deux passages si besoin, et contrôle rapide de la mécanique. Je m'adapte aux horaires de montage, tôt le matin ou tard le soir, et je reste joignable le jour J.
 
-Si vos clients vous demandent ce type de prestation, je serais heureux d'être votre contact. Un simple retour à ce message suffit, ou vous pouvez me joindre au 076 221 40 89.`,
-  relance:"Je reste à votre disposition pour l'accord des pianos de vos concerts et événements, y compris le jour même, avant les balances."}
+Si vos clients vous demandent ce type de prestation, j'aimerais être votre contact. Un simple retour à ce message suffit, ou vous pouvez m'appeler au ${TEL()}.`,
+  relance:() => relanceCorps("Je reste disponible pour accorder les pianos de vos concerts et événements, y compris le jour même, avant les balances.")}
 ];
-
-// Écoles de scolarité obligatoire (publiques et privées), repérées par la colonne
-// « Catégorie » de la feuille = « École scolaire ».
-const ECOLE_SCOLAIRE = {cat:"École scolaire",
-  obj:"Accordeur et facteur de piano — entretien des pianos de votre établissement",
-  acc:"Dans un établissement scolaire, le piano de l'aula, de la salle de musique ou de la salle de rythmique sert à des dizaines d'élèves chaque semaine, souvent sans que personne n'en suive l'état : il se dérègle peu à peu, et ne retient l'attention que le jour d'une fête ou d'un spectacle.",
-  core:`Je vous propose un contrôle de vos pianos, offert et sans engagement : tenue de l'accord, état de la mécanique et des marteaux, réglages, avec un rapport écrit qui distingue ce qui est urgent de ce qui peut attendre, et le coût estimé de chaque intervention. Je peux aussi assurer un accord ponctuel avant une fête de fin d'année, un concert ou une cérémonie.
-
-Je m'adapte à vos horaires, en dehors des heures de cours ou pendant les vacances scolaires. Si vous n'êtes pas la bonne personne pour ce message, n'hésitez pas à le transmettre à la personne compétente (direction, conciergerie, service des bâtiments). Un simple retour à ce message suffit, ou vous pouvez me joindre au 076 221 40 89.`,
-  relance:"Ma proposition tient toujours : un contrôle de vos pianos, offert et sans engagement, ou un accord ponctuel avant une fête ou un spectacle de votre établissement."};
 
 function cible(c){
   const t = norm(c.nom + " " + c.info);
   return CIBLES.find(k=>k.re.test(t)) || null;
 }
 
-const norm = s => (s||"").toLowerCase().normalize("NFD")
-  .replace(/[̀-ͯ]/g,"").replace(/\s+/g," ").trim();
-const esc = s => (s||"").replace(/&/g,'&amp;').replace(/</g,'&lt;');
-
 function accroche(nom, ville){
   const k = norm(nom);
   if (ACCROCHES[k]) return {t:ACCROCHES[k], perso:true};
   const lieu = ville ? ("la région de " + ville) : "la région lausannoise";
-  return {t:"J'interviens régulièrement dans " + lieu + " auprès de structures d'enseignement musical. Un piano joué plusieurs heures par jour ne demande pas le même entretien qu'un instrument de particulier : il se dérègle plus vite, et souvent sans prévenir.", perso:false};
+  return {t:"Je travaille régulièrement dans " + lieu + " avec des écoles et des structures d'enseignement de la musique. Un piano joué plusieurs heures par jour ne vit pas comme celui d'un particulier : il se dérègle plus vite, et souvent sans prévenir.", perso:false};
 }
-function objet(etat, ville){
-  if (etat==="Mail envoyé"||etat==="Relancé"||etat==="Pas de réponse")
-    return "Re : accordage de vos pianos — proposition d'audit";
-  return ville
-    ? "Accordeur et facteur de piano à "+ville+" — audit offert de votre parc d'instruments"
-    : "Accordeur et facteur de piano — audit offert de votre parc d'instruments";
+function objet(ville){
+  return ville ? "Accordeur de piano à "+ville+" : un partenaire pour vos pianos"
+               : "Accordeur de piano : un partenaire pour vos pianos";
 }
-function corps(c){
-  if (c.relance) return RELANCE_BODY;
-  return `Bonjour,
-
-Je m'appelle Arnaud Cormary, je suis accordeur et facteur de piano à l'Atelier Piano Léman.
+const corps = c => `${intro()}
 
 ${c.acc.t}
 
-${CORE}
+${CORE()}
 
-${SIG}`;
-}
-function bodyHotel(c){
-  return `Bonjour,
+${SIG()}`;
 
-Je m'appelle Arnaud Cormary. Je suis accordeur et facteur de piano, installé sur la Côte, et je consacre mon métier à un artisanat exigeant : l'accord, l'entretien et la restauration de pianos pour une clientèle qui ne transige pas sur la qualité.
+const bodyHotel = c => `${intro()} J'accompagne les lieux qui font vivre la musique : accord, entretien et restauration de pianos.
 
 ${c.h}
 
-${CORE_HOTEL}
+${CORE_HOTEL()}
 
-Bien cordialement,`;
-}
-function bodyConcierge(c){
-  return `Bonjour,
-
-Je m'appelle Arnaud Cormary. Je suis accordeur et facteur de piano, installé sur la région lémanique, et je consacre mon métier à un artisanat exigeant : l'accord, l'entretien et la restauration de pianos pour une clientèle qui ne transige pas sur la qualité.
+${SIG()}`;
+const bodyConcierge = c => `${intro()} J'accompagne les lieux et les personnes qui font vivre la musique : accord, entretien et restauration de pianos.
 
 ${c.h}
 
-${CORE_CONCIERGE}
+${CORE_CONCIERGE()}
 
-Bien cordialement,`;
-}
-function bodyBateau(c){
-  return `Bonjour,
-
-Je m'appelle Arnaud Cormary, je suis accordeur et facteur de piano à l'Atelier Piano Léman.
+${SIG()}`;
+const bodyBateau = c => `${intro()}
 
 ${c.h}
 
-${CORE_BATEAU}
+${CORE_BATEAU()}
 
-Bien cordialement,`;
-}
+${SIG()}`;
 
 const HOTELS = [
  {n:"Fairmont Le Montreux Palace", v:"Montreux", e:"montreux@fairmont.com",
-  h:"Le piano du Grand Hall, dans le sillage historique du Montreux Jazz Festival, est l'un des symboles les plus visibles de votre maison — un instrument de cette portée mérite un suivi à la hauteur de votre exigence.",
+  h:"Le piano du Grand Hall, dans le sillage du Montreux Jazz Festival, est l'un des symboles de votre maison : il mérite un suivi régulier.",
   note:"Piano confirmé au Grand Hall et au Salon Musique."},
  {n:"Grand Hôtel du Lac", v:"Vevey", e:"", contact:"https://www.ghdl.ch/en/contact/",
-  h:"Si le piano d'Henryk's Bar est toujours en place, sachez qu'un instrument aussi exposé au public mérite un entretien à la hauteur de la maison qui l'accueille — discret, précis, et pensé pour ne jamais gêner votre service.",
-  note:"Pas d'adresse publiée — page de contact. Piano vu en source secondaire."},
+  h:"Si le piano d'Henryk's Bar est toujours en place, c'est un instrument très exposé : j'aimerais m'en occuper discrètement, sans gêner votre service.",
+  note:"Pas d'adresse publiée : page de contact. Piano vu en source secondaire."},
  {n:"Hôtel des Trois Couronnes", v:"Vevey", e:"", contact:"https://www.hoteltroiscouronnes.ch/en/contact/",
-  h:"Si le piano du Veranda Bar est toujours d'actualité, sachez que c'est précisément ce type d'instrument, entendu chaque jour, qui exige l'oreille la plus attentive — celle qui perçoit ce qu'un client ne formulera jamais, mais ressentira.",
-  note:"Pas d'adresse publiée — page de contact. Piano vu en source secondaire."},
+  h:"Si le piano du Veranda Bar est toujours là, c'est un instrument qu'on entend chaque jour : quand il est juste, ça se ressent sans qu'on sache pourquoi.",
+  note:"Pas d'adresse publiée : page de contact. Piano vu en source secondaire."},
  {n:"Beau-Rivage Palace", v:"Lausanne", e:"", contact:"https://www.brp.ch/en/contact-us/",
-  h:"Si le piano du Lobby Lounge est toujours présent face au lac et aux Alpes, sa tenue engage votre maison autant que le service en salle — ce sont ces détails-là qui distinguent un palace d'un simple hôtel.",
-  note:"Pas d'adresse publiée — page de contact. Piano vu en source secondaire."},
+  h:"Si le piano du Lobby Lounge est toujours présent face au lac et aux Alpes, sa tenue compte autant que le service en salle.",
+  note:"Pas d'adresse publiée : page de contact. Piano vu en source secondaire."},
  {n:"Four Seasons Hôtel des Bergues", v:"Genève", e:"gen.reservations@fourseasons.com",
-  h:"Si un piano se trouve toujours au Bar des Bergues, sachez qu'un instrument entendu chaque soir par une clientèle qui a l'habitude du meilleur ne peut se permettre l'à-peu-près.",
+  h:"Si un piano se trouve toujours au Bar des Bergues, c'est un instrument que votre clientèle entend chaque soir : il doit rester juste.",
   note:"Présence du piano non confirmée directement."},
  {n:"Beau-Rivage Genève", v:"Genève", e:"reservation@beau-rivage.com",
-  h:"Votre pianiste résident anime vos soirées depuis plus de 15 ans — une telle fidélité, rare et précieuse, mérite un instrument suivi avec la même exigence et la même constance.",
-  note:"Pianiste résident depuis plus de 15 ans — bonne accroche."},
+  h:"Votre pianiste résident anime vos soirées depuis plus de 15 ans. Un piano bien suivi, c'est aussi une façon de lui faciliter la vie.",
+  note:"Pianiste résident depuis plus de 15 ans : bonne accroche."},
  {n:"La Réserve Genève", v:"Genève-Bellevue", e:"", contact:"https://www.lareserve-geneve.com/en/contact-us/",
-  h:"Dans un lieu pensé jusque dans le moindre détail par Jacques Garcia, si vous disposez d'un piano, il ne mérite rien de moins que le même soin que le reste de la maison.",
-  note:"Pas d'adresse publiée — page de contact. Présence d'un piano non confirmée."}
+  h:"Dans un lieu pensé jusque dans le moindre détail, si vous avez un piano, il mérite le même soin que le reste de la maison.",
+  note:"Pas d'adresse publiée : page de contact. Présence d'un piano non confirmée."}
 ];
 
-const GEN_CONC = "Vos clients vous confient leurs exigences les plus précises pour leur résidence sur la Côte. Vous savez mieux que personne que tout se joue sur le bon prestataire, trouvé au bon moment.";
-const GEN_CHALET = "Vos clients vous confient l'organisation de leur chalet dans ses moindres détails — un piano, dans ce cadre alpin, appelle le même soin que le reste de la maison, et le même sens du service.";
+const GEN_CONC = "Vos clients vous confient les détails de leur résidence sur la Côte, et vous savez que tout se joue sur le bon prestataire, trouvé au bon moment. Un piano en fait partie.";
+const GEN_CHALET = "Vos clients vous confient l'organisation de leur chalet dans les moindres détails. Un piano, dans ce cadre, mérite le même soin que le reste de la maison.";
 
 const CONCIERGES = [
- {n:"Label Concierge", v:"Genève", e:"", contact:"https://www.labelconcierge.com/contact/", h:GEN_CONC, note:"Pas d'adresse publiée — page de contact."},
+ {n:"Label Concierge", v:"Genève", e:"", contact:"https://www.labelconcierge.com/contact/", h:GEN_CONC, note:"Pas d'adresse publiée : page de contact."},
  {n:"Eacons", v:"Genève", e:"info@eacons.ch", h:GEN_CONC, note:""},
- {n:"M&M Luxury Services", v:"Genève", e:"contact@mmluxuryservices.com", h:GEN_CONC, note:"Adresse générique trouvée en ligne — à confirmer avant l'envoi."},
+ {n:"M&M Luxury Services", v:"Genève", e:"contact@mmluxuryservices.com", h:GEN_CONC, note:"Adresse générique trouvée en ligne : à confirmer avant l'envoi."},
  {n:"Royal Court", v:"Nyon · La Côte · Lausanne · Montreux", e:"", contact:"https://www.royalcourt.co/",
-  h:"Vous gérez des propriétés d'exception sur toute la Côte, de Nyon à Montreux, où chaque intervenant que vous recommandez engage votre nom autant que le sien.",
-  note:"Pas d'adresse publiée — page de contact."},
+  h:"Vous gérez des propriétés d'exception de Nyon à Montreux : chaque personne que vous recommandez engage votre nom autant que le sien.",
+  note:"Pas d'adresse publiée : page de contact."},
  {n:"Le Bureau", v:"Genève", e:"info@le-bureau.ch", h:GEN_CONC, note:"Conciergerie haut de gamme active depuis 2002."},
  {n:"Hême Luxury Realty", v:"Lausanne", e:"info@heme-luxury-realty.ch",
-  h:"Dans l'immobilier de prestige, vous savez mieux que quiconque que chaque détail engage votre réputation — un piano bien tenu en fait partie, autant qu'une toiture impeccable ou une cuisine dernier cri.",
+  h:"Dans l'immobilier de prestige, chaque détail compte : un piano bien tenu en fait partie, comme une toiture en bon état.",
   note:"Agence immobilière de luxe avec volet conciergerie."},
- {n:"Empire Rent", v:"Genève", e:"", contact:"https://www.empire-rent.ch/contact", h:GEN_CONC, note:"Pas d'adresse publiée — page de contact."},
+ {n:"Empire Rent", v:"Genève", e:"", contact:"https://www.empire-rent.ch/contact", h:GEN_CONC, note:"Pas d'adresse publiée : page de contact."},
  {n:"Concierg'luxe", v:"Lausanne · Riviera vaudoise", e:"", contact:"https://conciergeriedeluxelausanne.ch/",
-  h:"Vous couvrez toute la Riviera vaudoise, de Pully à Epalinges, où bien des résidences privées abritent un piano rarement entretenu, faute d'un contact de confiance.",
-  note:"Pas d'adresse publiée — page de contact."},
+  h:"Vous couvrez toute la Riviera vaudoise, où beaucoup de résidences abritent un piano rarement entretenu, faute d'un contact de confiance.",
+  note:"Pas d'adresse publiée : page de contact."},
  {n:"NV Properties", v:"Vaud · Lausanne · Vevey · Nyon", e:"", contact:"https://www.nvproperties.fr/contact/",
-  h:"Sur vos biens du canton de Vaud, de Nyon à Vevey, certains pianos ne voient un technicien qu'au moment de l'état des lieux — quand il est déjà trop tard pour négocier sereinement.",
-  note:"Pas d'adresse publiée — page de contact."},
+  h:"Sur vos biens du canton de Vaud, certains pianos ne voient un technicien qu'au moment de l'état des lieux, quand il est déjà tard pour s'en occuper sereinement.",
+  note:"Pas d'adresse publiée : page de contact."},
  {n:"The Alpine Concierge Sàrl", v:"Lausanne", e:"", tel:"078 762 17 03", h:GEN_CONC, note:"Téléphone uniquement."},
  {n:"Conciergerie Léman", v:"Genève", e:"", tel:"+33 7 44 09 56 24", h:GEN_CONC, note:"Gestion immobilière avec volet conciergerie. Téléphone uniquement."},
- {n:"Laconciergerie.ch", v:"Genève", e:"", contact:"https://laconciergerie.ch/contact/", h:GEN_CONC, note:"Pas d'adresse publiée — page de contact."},
+ {n:"Laconciergerie.ch", v:"Genève", e:"", contact:"https://laconciergerie.ch/contact/", h:GEN_CONC, note:"Pas d'adresse publiée : page de contact."},
  {n:"ALEYDIS Prestige", v:"Genève · Lausanne · Vaud", e:"", contact:"https://aleydisprestige.ch/",
-  h:"Vous placez du personnel de maison dans des propriétés qui possèdent souvent un piano — un instrument auquel le majordome ou l'intendant ne pense pas toujours, faute d'un contact établi.",
-  note:"Staffing pour familles UHNW — pas d'adresse publiée."},
+  h:"Vous placez du personnel de maison dans des propriétés qui ont souvent un piano, auquel l'intendant ne pense pas toujours, faute d'un contact établi.",
+  note:"Staffing pour familles UHNW : pas d'adresse publiée."},
  {n:"Conciergerie « Your Time is Precious »", v:"Suisse romande", e:"", tel:"079 532 97 81", h:GEN_CONC, note:"Téléphone uniquement."},
- {n:"Concierge CM", v:"Crans-Montana", e:"info@conciergecm.ch", h:GEN_CHALET, note:"Station de montagne, hors de votre zone habituelle — prévoir un déplacement."},
- {n:"CosyHome Conciergerie", v:"Crans-Montana · Valais", e:"info@cosyhomeconciergerie.ch", h:GEN_CHALET, note:"Station de montagne, hors de votre zone habituelle — prévoir un déplacement."},
+ {n:"Concierge CM", v:"Crans-Montana", e:"info@conciergecm.ch", h:GEN_CHALET, note:"Station de montagne, hors de ta zone habituelle : prévoir un déplacement."},
+ {n:"CosyHome Conciergerie", v:"Crans-Montana · Valais", e:"info@cosyhomeconciergerie.ch", h:GEN_CHALET, note:"Station de montagne, hors de ta zone habituelle : prévoir un déplacement."},
  {n:"VIP Gstaad", v:"Gstaad", e:"", tel:"+41 33 744 37 28",
-  h:"À Gstaad, votre clientèle attend l'excellence jusque dans les moindres recoins du chalet — un piano bien tenu fait partie de ces attentions qui distinguent un séjour d'exception.",
-  note:"Téléphone uniquement, et hors de votre zone habituelle (~2h de route)."}
+  h:"À Gstaad, vos clients attendent le meilleur jusque dans le chalet : un piano bien tenu fait partie de ces attentions.",
+  note:"Téléphone uniquement, et hors de ta zone habituelle (~2h de route)."}
 ];
 
 const BATEAUX = [
  {n:"CGN — Compagnie Générale de Navigation", v:"Lausanne · Genève", e:"geneve@cgn.ch",
-  h:"Vos bateaux Belle Époque à roues à aubes, comme le Simplon ou le Montreux, possèdent parfois un salon musique historique — si un piano y est encore installé, il mérite un entretien à la hauteur de ce patrimoine unique sur le Léman.",
-  note:"Flotte historique classée — présence d'un piano à confirmer bateau par bateau."},
+  h:"Vos bateaux Belle Époque, comme le Simplon ou le Montreux, ont parfois un salon de musique historique : si un piano y est encore installé, il mérite un entretien à la hauteur de ce patrimoine.",
+  note:"Flotte historique classée : présence d'un piano à confirmer bateau par bateau."},
  {n:"Mouettes Genevoises Navigation", v:"Genève", e:"info@mouettesgenevoises.ch",
-  h:"Pour vos croisières et événements privés sur la rade, un piano à bord ajoute une touche d'élégance rare — je peux en assurer l'accord avant chaque sortie ou embarquement d'exception.",
+  h:"Pour vos croisières et événements privés sur la rade, un piano à bord crée une ambiance rare. Je peux l'accorder avant chaque sortie.",
   note:""},
  {n:"MSC Cruises — bureau Genève", v:"Genève", e:"reservation_fr@msccruises.ch",
-  h:"Vos navires disposent souvent d'un piano bar ou d'un salon musical — si votre bureau genevois coordonne ce type de prestation ponctuelle en Suisse, je me tiens à votre disposition.",
-  note:"Croisières maritimes internationales, pas un armateur du Léman — pertinence à valider."},
+  h:"Vos navires ont souvent un piano-bar ou un salon musical. Si votre bureau genevois coordonne ce type de prestation ponctuelle en Suisse, je suis disponible.",
+  note:"Croisières maritimes internationales, pas un armateur du Léman : pertinence à valider."},
  {n:"Citron Productions", v:"Tarragone — réseau international", e:"robcitron@citronproductions.com",
-  h:"Vous coordonnez un réseau de techniciens piano pour les bateaux de croisière, yachts et propriétés privées à travers le monde.",
-  note:"« Piano Technicians World Wide » : réseau dans plus de 40 pays. Ici vous candidatez pour rejoindre le réseau.",
-  customBody:`Bonjour Rob,
+  h:"Vous coordonnez un réseau de techniciens piano pour les bateaux de croisière, yachts et propriétés privées dans le monde entier.",
+  note:"« Piano Technicians World Wide » : réseau dans plus de 40 pays. Ici tu candidates pour rejoindre le réseau.",
+  customBody:() => `Bonjour Rob,
 
-Je m'appelle Arnaud Cormary, je suis accordeur et facteur de piano, basé à l'Atelier Piano Léman en Suisse romande, sur les rives du lac Léman.
+Je suis ${cfg.nom}, accordeur et facteur de piano à l'Atelier Piano Léman, en Suisse romande, sur les rives du lac Léman.
 
-J'ai découvert votre réseau Piano Technicians World Wide et le travail que vous coordonnez pour les compagnies de croisière à travers le monde. Le lac Léman et la Suisse romande ne semblent pas encore couverts par un technicien de votre réseau dans cette région précise, entre Genève et Montreux.
+J'ai découvert votre réseau Piano Technicians World Wide et le travail que vous coordonnez pour les compagnies de croisière. Le lac Léman et la Suisse romande ne semblent pas encore couverts par un technicien de votre réseau, entre Genève et Montreux.
 
-Je serais intéressé à rejoindre votre réseau pour représenter cette zone : accord, entretien et petites réparations pour les pianos à bord, lors des escales ou stationnements dans la région.
+J'aimerais rejoindre votre réseau pour représenter cette zone : accord, entretien et petites réparations des pianos à bord, lors des escales ou des stationnements dans la région.
 
-Je me tiens à votre disposition pour vous envoyer mon profil et mes références, ou pour échanger directement — au 076 221 40 89.
+Je vous envoie volontiers mon profil et mes références, ou nous pouvons en discuter directement. Vous pouvez me joindre au ${TEL()}.
 
-Bien cordialement,`}
+${SIG()}`}
 ];
 
-// Fiches rédigées à la main : seuls les textes (accroche, note, page de contact)
-// servent encore. Nom, adresse, ville, téléphone et état viennent de la feuille.
 const coreStr = s => norm(s).replace(/[^a-z0-9]/g,"");
 const ENRICH = [
   ...HOTELS.map(c=>({...c, cat:"Hôtel",
-    obj:"Accordeur et facteur de piano — à la disposition de votre établissement"+(c.v?" ("+c.v+")":""),
+    obj:"Accordeur et facteur de piano sur la Côte, pour le piano de votre établissement",
     body:bodyHotel})),
   ...CONCIERGES.map(c=>({...c, cat:"Conciergerie",
-    obj:"Accordeur et facteur de piano — à votre disposition pour vos clients les plus exigeants",
+    obj:"Accordeur et facteur de piano : un contact fiable pour vos clients",
     body:bodyConcierge})),
   ...BATEAUX.map(c=>({...c, cat:"Navigation",
-    obj:c.customBody?"Technicien piano — candidature pour rejoindre votre réseau (région du Léman)"
-                    :"Accordeur et facteur de piano — entretien du piano de vos bateaux et croisières",
-    body:c.customBody?(()=>c.customBody):bodyBateau}))
+    obj:c.customBody?"Candidature : technicien piano pour la région du Léman"
+                    :"Accordeur et facteur de piano, pour le piano de vos bateaux",
+    body:c.customBody?(()=>c.customBody()):bodyBateau}))
 ].map(e=>({...e, key:coreStr(e.n)}));
 
 function enrichir(nom){
@@ -420,6 +567,7 @@ function enrichir(nom){
       || null;
 }
 
+/* ═══════════════ Lecture de la feuille ═══════════════ */
 function parseCSV(txt){
   const rows=[]; let row=[], cur="", q=false;
   for (let i=0;i<txt.length;i++){
@@ -468,7 +616,7 @@ function parse(csv){
   if (head<0) return [];
   const cols = rows[head].map(norm);
   // Colonnes repérées par leur nom, avec la position A…H en secours. Les deux
-  // colonnes « État » (F et G) portent le même nom : seule la première (F) fait foi.
+  // colonnes « État » (F et G) portaient le même nom : seule la première (F) fait foi.
   const pos = (n, p) => { const i = cols.indexOf(n); return i>=0 ? i : p; };
   const iNom=pos("nom",0), iTel=pos("numero",1), iMail=pos("mail",2),
         iMail2=pos("mail 2",3), iVille=pos("ville",4), iEtat=pos("etat",5),
@@ -486,7 +634,6 @@ function parse(csv){
       mail:mails[0]||"", autres:mails.slice(1),
       info:[m1.reste,m2.reste].filter(Boolean).join(" — "),
       etat:(c[iEtat]||"").trim(),
-      // Colonne « Catégorie » de la feuille (vide pour les anciennes lignes).
       catFeuille:(c[iCat]||"").trim(),
       // Chaque enregistrement CSV correspond à une ligne de la feuille (ligne i+1).
       celluleEtat:String.fromCharCode(65+iEtat) + (i+1),
@@ -495,83 +642,106 @@ function parse(csv){
   return out;
 }
 
+const siteDe = c => { const s=c.info.match(RE_SITE); return s ? (/^http/.test(s[0])?s[0]:"https://"+s[0]) : ""; };
+const sansMail = c => "Aucune adresse dans la feuille : "
+  + (c.contact ? "passer par la page de contact" : "à compléter")
+  + (c.tel ? ", ou appeler au "+c.tel : "") + ".";
+
 function prepare(r){
   const c = Object.assign({}, r);
+  c.key = norm(c.nom);
   c.relance = ["Mail envoyé","Relancé","Pas de réponse"].indexOf(c.etat)>=0;
-  const site = c.info.match(RE_SITE);
   const scolaire = norm(c.catFeuille) === "ecole scolaire";
   c.e = scolaire ? null : enrichir(c.nom);
   if (scolaire){
     const k = ECOLE_SCOLAIRE;
     c.cat = k.cat;
     c.obj = c.relance ? "Re : " + k.obj : k.obj;
-    c.texte = c.relance ? relanceCible(k.relance) : `Bonjour,
+    c.surligne = c.relance ? null : k.acc();
+    c.texte = c.relance ? k.relance() : `${intro()}
 
-Je m'appelle Arnaud Cormary, je suis accordeur et facteur de piano à l'Atelier Piano Léman.
+${k.acc()}
 
-${k.acc}
+${k.core()}
 
-${k.core}
-
-${SIG}`;
-    c.surligne = c.relance ? null : k.acc;
-    c.contact = site ? (/^http/.test(site[0])?site[0]:"https://"+site[0]) : "";
-    c.note = c.mail ? "Accroche « École scolaire » : vérifiez qu'un piano existe bien dans l'établissement avant l'envoi."
-      : "Aucune adresse dans la feuille — " + (c.contact ? "passer par la page de contact" : "à compléter") + (c.tel ? ", ou appeler au " + c.tel : "") + ".";
+${SIG()}`;
+    c.contact = siteDe(c);
+    c.note = c.mail ? "Vérifie qu'il y a bien un piano dans l'établissement avant d'envoyer." : sansMail(c);
   } else if (c.e){
     c.cat = c.e.cat;
     c.obj = c.relance ? "Re : " + c.e.obj : c.e.obj;
-    c.texte = c.relance ? RELANCE_PRESTIGE : c.e.body(c.e);
+    c.texte = c.relance ? RELANCE_PRESTIGE() : c.e.body(c.e);
     c.surligne = c.relance ? null : c.e.h;
-    c.contact = site ? (/^http/.test(site[0])?site[0]:"https://"+site[0]) : (c.e.contact||"");
+    c.contact = siteDe(c) || c.e.contact || "";
     c.note = c.e.note || "";
     // Ces remarques décrivaient l'ancienne liste : la feuille fait foi désormais.
     c.note = c.note.replace(/(Pas d'adresse publiée[^.]*\.?|Téléphone uniquement(\.|, et)?)\s*/gi,"")
-      .replace(/^[\s,.—-]+|[\s,—-]+$/g,"").replace(/^./,ch=>ch.toUpperCase());
-    if (!c.mail) c.note = "Aucune adresse dans la feuille — " + (c.contact?"passer par la page de contact":"à compléter") + (c.tel?", ou appeler au "+c.tel:"") + "." + (c.note?" "+c.note:"");
+      .replace(/^[\s,.—:-]+|[\s,—-]+$/g,"").replace(/^./,ch=>ch.toUpperCase());
+    if (!c.mail) c.note = sansMail(c) + (c.note?" "+c.note:"");
   } else if ((c.k = cible(c)) && !ACCROCHES[norm(c.nom)]){
     c.cat = c.k.cat;
     c.obj = c.relance ? "Re : " + c.k.obj : c.k.obj;
-    c.texte = c.relance ? relanceCible(c.k.relance) : `Bonjour,
+    c.surligne = c.relance ? null : c.k.acc();
+    c.texte = c.relance ? c.k.relance() : `${intro()}
 
-Je m'appelle Arnaud Cormary, je suis accordeur et facteur de piano à l'Atelier Piano Léman.
+${c.k.acc()}
 
-${c.k.acc}
+${c.k.core()}
 
-${c.k.core}
-
-${SIG}`;
-    c.surligne = c.relance ? null : c.k.acc;
-    c.contact = site ? (/^http/.test(site[0])?site[0]:"https://"+site[0]) : "";
+${SIG()}`;
+    c.contact = siteDe(c);
     c.note = NOTES[norm(c.nom)] || "";
-    if (!c.mail) c.note = "Aucune adresse dans la feuille — à compléter" + (c.tel?", ou à appeler au "+c.tel:"") + ".";
-    else if (!c.relance) c.note = "Accroche type « " + c.k.cat + " » : relisez la phrase surlignée avant d'envoyer.";
+    if (!c.mail) c.note = sansMail(c);
+    else if (!c.relance) c.note = "Accroche type « " + c.k.cat + " » : relis la phrase surlignée avant d'envoyer.";
     if (/\((de|d|at)\)/i.test(c.ville)) c.note = (c.note?c.note+" ":"") + "Contact hors de Suisse : un message en allemand ou en anglais sera sans doute mieux reçu.";
   } else {
-    c.cat = "";
+    c.cat = "École de musique";
     c.acc = accroche(c.nom, c.ville);
-    c.obj = objet(c.etat, c.ville);
-    c.texte = corps(c);
+    c.obj = c.relance ? "Re : " + objet("") : objet(c.ville);
+    c.texte = c.relance ? RELANCE_ECOLE() : corps(c);
     c.surligne = c.relance ? null : c.acc.t;
-    c.contact = site ? (/^http/.test(site[0])?site[0]:"https://"+site[0]) : "";
+    c.contact = siteDe(c);
     c.note = NOTES[norm(c.nom)] || "";
-    if (!c.mail) c.note = "Aucune adresse dans la feuille — à compléter" + (c.tel?", ou à appeler au "+c.tel:"") + ".";
-    else if (!c.acc.perso && !c.relance) c.note = "Nouvelle entrée : accroche générique. Personnalisez la phrase surlignée avant d'envoyer.";
+    if (!c.mail) c.note = sansMail(c);
+    else if (!c.acc.perso && !c.relance) c.note = "Nouvelle entrée : accroche générique. Personnalise la phrase surlignée avant d'envoyer.";
   }
+  // La catégorie écrite dans la feuille fait foi pour le classement.
   if (c.catFeuille) c.cat = c.catFeuille;
   const ajout = t => { c.note = c.note ? c.note.replace(/([^.!?»])$/,"$1.") + " " + t : t; };
-  if (c.info) ajout("Infos de votre feuille : « " + c.info + " »");
-  if (c.rep && c.etat!=="Ne pas contacter") ajout("Note de votre feuille : « " + c.rep + " »");
+  if (c.info) ajout("Infos de ta feuille : « " + c.info + " »");
+  if (c.rep && c.etat!=="Ne pas contacter") ajout("Note de ta feuille : « " + c.rep + " »");
   return c;
 }
 
-function copier(btn, txt){
+/* ═══════════════ Suivi local (jour, relances, « plus tard ») ═══════════════ */
+const finDeJour = () => { const d=new Date(); d.setHours(23,59,59,999); return d.getTime(); };
+function marquer(c, type){
+  const l = LOG[c.key] || (LOG[c.key] = {ts:[]});
+  l.ts.push(Date.now()); l.type = type; delete l.snooze; saveLog();
+}
+function reporter(c){
+  (LOG[c.key] || (LOG[c.key] = {ts:[]})).snooze = finDeJour(); saveLog();
+}
+function suivi(c){
+  const l = LOG[c.key];
+  const last = l && l.ts && l.ts.length ? l.ts[l.ts.length-1] : 0;
+  c.last = last;
+  c.fait = !!last && jour(new Date(last)) === jour(new Date());
+  c.reporte = !!(l && l.snooze && l.snooze > Date.now());
+  c.jours = last ? Math.floor((Date.now()-last)/864e5) : null;
+  c.aRelancer = c.etat === "Mail envoyé";
+  c.relanceDue = c.aRelancer && (c.jours === null || c.jours >= cfg.relanceJ);
+}
+
+/* ═══════════════ Fiches ═══════════════ */
+function copier(btn, txt, avant){
   btn.onclick = e => {
     e.stopPropagation();
     const lbl = btn.textContent;
     const fini = () => { btn.textContent="✓ Copié"; btn.classList.add('done');
       setTimeout(()=>{btn.textContent=lbl;btn.classList.remove('done')},1400); };
     const t = txt();
+    if (avant) avant();
     if (navigator.clipboard && window.isSecureContext)
       navigator.clipboard.writeText(t).then(fini).catch(fb);
     else fb();
@@ -588,141 +758,361 @@ function copier(btn, txt){
 const mailto = (adr, obj, txt) => "mailto:" + encodeURIComponent(adr)
   + "?subject=" + encodeURIComponent(obj) + "&body=" + encodeURIComponent(txt);
 
-function fiche(o){
-  const el = document.createElement('div');
-  el.className='card';
-  el.innerHTML = `
-    <div class="head">
-      <div class="dot" style="background:${o.fg}"></div>
-      <div class="who"><div class="nm">${esc(o.nom)}</div>
-        <div class="mt">${esc(o.meta)}</div></div>
-      <div class="tag" style="color:${o.fg};background:${o.bg}">${esc(o.etat)}</div>
-      <div class="chev">▶</div>
-    </div>
-    <div class="body">
-      ${o.mail?`<div class="lab">Destinataire</div><div class="val">${esc(o.mail)}</div>`:``}
-      ${o.autres.length?`<div class="lab">Autres adresses de la feuille</div>
-        <div class="btns">${o.autres.map((a,i)=>`<button class="b-alt" data-i="${i}">✉ ${esc(a)}</button>`).join("")}</div>`:``}
-      ${o.tel?`<div class="lab">Téléphone</div><div class="val"><a href="tel:${esc(o.tel.replace(/\s/g,''))}">${esc(o.tel)}</a></div>`:``}
-      <div class="lab">Objet</div><div class="val">${esc(o.obj)}</div>
-      <div class="lab">Message — touchez le texte pour le modifier</div>
-      <pre class="txt" contenteditable="true" spellcheck="true"></pre>
-      ${o.note?`<div class="flag">${esc(o.note)}</div>`:``}
-      <div class="btns">
-        ${o.mail?`<button class="primary b-open">✉ Ouvrir dans l'app mail</button>
-        <button class="b-body">Copier le mail</button>
-        <button class="b-adr">Copier l'adresse</button>`:``}
-        ${o.contact?`<button class="b-web">Page de contact ↗</button>`:``}
-        ${o.celluleEtat?`<button class="b-etat">Mettre à jour l'état ↗</button>`:``}
-        <button class="b-reset">Rétablir</button>
-      </div>
+let toastTimer;
+function toast(msg, label, fn){
+  const t = $('toast');
+  t.innerHTML = '<span>'+esc(msg)+'</span>' + (label?'<button>'+esc(label)+'</button>':'');
+  t.hidden = false;
+  if (label) t.querySelector('button').onclick = () => { t.hidden = true; fn && fn(); };
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ t.hidden = true; }, 6000);
+}
+const ouvrirEtat = c => window.open(SHEET_URL+"#gid=0&range="+c.celluleEtat,"_blank");
+
+// Contenu détaillé d'une fiche (partagé entre la liste et la session).
+function corpsHTML(c){
+  return `
+    ${c.mail?`<div class="lab">Destinataire</div><div class="val">${esc(c.mail)}</div>`:``}
+    ${c.autres.length?`<div class="lab">Autres adresses de la feuille</div>
+      <div class="btns">${c.autres.map((a,i)=>`<button class="b-alt" data-i="${i}">✉ ${esc(a)}</button>`).join("")}</div>`:``}
+    ${c.tel?`<div class="lab">Téléphone</div><div class="val"><a href="tel:${esc(c.tel.replace(/\s/g,''))}">${esc(c.tel)}</a></div>`:``}
+    <div class="lab">Objet</div><div class="val">${esc(c.obj)}</div>
+    <div class="lab">Message : touche le texte pour le modifier</div>
+    <pre class="txt" contenteditable="true" spellcheck="true"></pre>
+    ${c.note?`<div class="flag">${esc(c.note)}</div>`:``}
+    <div class="btns">
+      ${c.mail?`<button class="primary b-open">✉ Ouvrir dans l'app mail</button>
+      <button class="b-body">Copier le mail</button>
+      <button class="b-adr">Copier l'adresse</button>`:``}
+      ${c.tel&&!c.mail?`<button class="primary b-call">📞 Appeler</button>`:``}
+      ${c.contact?`<button class="b-web">Page de contact ↗</button>`:``}
+      ${c.celluleEtat?`<button class="b-etat">Mettre à jour l'état ↗</button>`:``}
+      <button class="b-reset soft">Rétablir le texte</button>
     </div>`;
-  const pre = el.querySelector('pre');
+}
+
+function brancher(root, c, apres){
+  const pre = root.querySelector('pre');
   const rendu = () => {
-    let h = esc(o.texte);
-    if (o.surligne) h = h.replace(esc(o.surligne), '<mark>'+esc(o.surligne)+'</mark>');
+    let h = esc(c.texte);
+    if (c.surligne) h = h.replace(esc(c.surligne), '<mark>'+esc(c.surligne)+'</mark>');
     pre.innerHTML = h;
   };
   rendu();
-  el.querySelector('.b-reset').onclick = e => { e.stopPropagation(); rendu(); };
-  el.querySelector('.head').onclick = () => el.classList.toggle('open');
-  if (o.mail){
-    copier(el.querySelector('.b-body'), ()=>pre.innerText);
-    copier(el.querySelector('.b-adr'), ()=>o.mail);
-    el.querySelector('.b-open').onclick = e => {
+  const note = (type) => {
+    marquer(c, type);
+    toast("C'est noté dans ton suivi. Pense à passer l'état à « " + (c.relance?"Relancé":"Mail envoyé") + " » dans la feuille.",
+          "Ouvrir la cellule", () => ouvrirEtat(c));
+    if (apres) apres();
+  };
+  root.querySelector('.b-reset').onclick = e => { e.stopPropagation(); rendu(); };
+  if (c.mail){
+    copier(root.querySelector('.b-body'), ()=>pre.innerText, ()=>note("copie"));
+    copier(root.querySelector('.b-adr'), ()=>c.mail);
+    root.querySelector('.b-open').onclick = e => {
       e.stopPropagation();
-      window.location.href = mailto(o.mail, o.obj, pre.innerText);
+      note("mail");
+      window.location.href = mailto(c.mail, c.obj, pre.innerText);
     };
   }
-  el.querySelectorAll('.b-alt').forEach(b => b.onclick = e => {
+  const call = root.querySelector('.b-call');
+  if (call) call.onclick = e => { e.stopPropagation(); marquer(c,"appel");
+    if (apres) apres(); window.location.href = "tel:" + c.tel.replace(/\s/g,""); };
+  root.querySelectorAll('.b-alt').forEach(b => b.onclick = e => {
     e.stopPropagation();
-    window.location.href = mailto(o.autres[+b.dataset.i], o.obj, pre.innerText);
+    note("mail");
+    window.location.href = mailto(c.autres[+b.dataset.i], c.obj, pre.innerText);
   });
-  if (o.contact) el.querySelector('.b-web').onclick = e => {
-    e.stopPropagation(); window.open(o.contact,"_blank"); };
-  if (o.celluleEtat) el.querySelector('.b-etat').onclick = e => {
-    e.stopPropagation(); window.open(SHEET_URL+"#gid=0&range="+o.celluleEtat,"_blank"); };
+  const web = root.querySelector('.b-web');
+  if (web) web.onclick = e => { e.stopPropagation(); window.open(c.contact,"_blank"); };
+  const et = root.querySelector('.b-etat');
+  if (et) et.onclick = e => { e.stopPropagation(); ouvrirEtat(c); };
+}
+
+function badges(c){
+  const b = [];
+  if (c.fait) b.push('<span class="badge ok">✓ Préparé aujourd\'hui</span>');
+  else if (c.reporte) b.push('<span class="badge">Plus tard</span>');
+  if (c.aRelancer && c.jours!==null) b.push('<span class="badge '+(c.relanceDue?'warn':'')+'">J+'+c.jours+'</span>');
+  else if (c.aRelancer) b.push('<span class="badge warn">À relancer</span>');
+  return b.join("");
+}
+
+function fiche(c){
+  const fg = couleur(c.etat);
+  const el = document.createElement('div');
+  el.className='card';
+  el.style.setProperty('--st', fg);
+  const meta = (c.cat?c.cat+" · ":"") + (c.ville||"—")
+    + (c.mail?" · "+c.mail:(c.tel?" · "+c.tel:" · pas d'e-mail"));
+  el.innerHTML = `
+    <div class="head">
+      <div class="who"><div class="nm">${esc(c.nom)}</div><div class="mt">${esc(meta)}</div></div>
+      ${badges(c)}
+      <div class="pill" style="color:${fg};background:${fg}22">${esc(c.etat||"—")}</div>
+      <div class="chev">▶</div>
+    </div>
+    <div class="body">${corpsHTML(c)}
+      <div class="btns"><button class="b-later soft">${c.reporte?"Remettre dans la file":"Plus tard"}</button></div>
+    </div>`;
+  el.querySelector('.head').onclick = () => el.classList.toggle('open');
+  el.querySelector('.b-later').onclick = e => { e.stopPropagation();
+    if (c.reporte){ delete LOG[c.key].snooze; saveLog(); } else reporter(c);
+    rafraichir(); };
+  brancher(el, c, () => { rafraichir(false); });
   return el;
 }
 
-function carteFeuille(c){
-  const [fg,bg] = COULEURS[c.etat] || COULEURS[""];
-  return fiche({ nom:c.nom, etat:c.etat||"—", fg, bg,
-    meta:(c.cat?c.cat+" · ":"") + (c.ville||"—")
-      + (c.mail?" · "+c.mail:(c.tel?" · "+c.tel:" · pas d'e-mail")),
-    mail:c.mail, autres:c.autres, tel:c.tel, contact:c.contact, celluleEtat:c.celluleEtat, obj:c.obj,
-    texte:c.texte, surligne:c.surligne, note:c.note });
+/* ═══════════════ Vue liste / relances ═══════════════ */
+let RAW=[], TOUS=[], vue="liste", catSel="";
+
+function base(){
+  if (vue==="relances") return TOUS.filter(c=>c.aRelancer);
+  return TOUS.filter(c => cfg.filtre==="all" || (c.etat!=="Ne pas contacter" && c.etat!=="RDV"));
 }
 
-let TOUS=[], filtre="todo", catSel="", groupe="cat";
-const ORDRE_ETAT=["À contacter","Pas de réponse","Mail envoyé","Relancé","RDV","Ne pas contacter"];
-const ORDRE_CAT=["École scolaire","École de musique","Hôtel","Conciergerie","Assurance","Événementiel","Salle / Culture","Navigation","Institution","Revendeur"];
-const rangEtat = e => { const i=ORDRE_ETAT.indexOf(e||""); return i<0?99:i; };
-const rangCat  = k => { const i=ORDRE_CAT.indexOf(k||""); return k?(i<0?50:i):99; };
-
-// Puces de catégories avec compteurs (hors contacts à ne pas contacter dans « À contacter »).
 function puces(){
-  const box=document.getElementById('cats');
-  const base = TOUS.filter(c => filtre==="all" || (c.etat!=="Ne pas contacter" && c.etat!=="RDV"));
-  const n={}; base.forEach(c=>{ const k=c.cat||""; n[k]=(n[k]||0)+1; });
+  const box=$('cats');
+  const b = base();
+  const n={}; b.forEach(c=>{ const k=c.cat||""; n[k]=(n[k]||0)+1; });
   const cats=Object.keys(n).sort((a,b)=>rangCat(a)-rangCat(b)||a.localeCompare(b,"fr"));
   if (catSel && !((catSel==="__aucune"?"":catSel) in n)) catSel="";
   const mk=(k,l,nb)=>`<button class="chip${catSel===k?' on':''}" data-k="${esc(k)}">${esc(l)}<small>${nb}</small></button>`;
-  box.innerHTML = mk("","Toutes",base.length) + cats.map(k=>mk(k||"__aucune",k||"Sans catégorie",n[k])).join("");
-  box.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{ catSel=b.dataset.k; afficher(); });
+  box.innerHTML = mk("","Toutes",b.length) + cats.map(k=>mk(k||"__aucune",k||"Sans catégorie",n[k])).join("");
+  box.querySelectorAll('.chip').forEach(x=>x.onclick=()=>{ catSel=x.dataset.k; afficher(); });
 }
 
 function afficher(){
   puces();
-  const out = document.getElementById('out');
+  const out = $('out');
   out.innerHTML="";
   // Une recherche porte sur tous les contacts, quel que soit le filtre d'état.
-  const q = norm(document.getElementById('q').value);
-  const vis = TOUS.filter(c => (!catSel || (c.cat||"")===(catSel==="__aucune"?"":catSel)) && (q
+  const q = norm($('q').value);
+  const vue_ = TOUS.filter(c => (!catSel || (c.cat||"")===(catSel==="__aucune"?"":catSel)) && (q
     ? norm([c.nom,c.ville,c.mail,c.autres.join(" "),c.cat,c.etat].join(" ")).includes(q)
-    : filtre==="all" || (c.etat!=="Ne pas contacter" && c.etat!=="RDV")));
-  if (!vis.length){ out.innerHTML='<div class="msg">'+(q?"Aucun contact ne correspond à la recherche.":"Rien à afficher.")+'</div>'; return; }
+    : base().indexOf(c)>=0));
+  if (!vue_.length){
+    out.innerHTML='<div class="msg">'+(q?"Aucun contact ne correspond à la recherche."
+      : vue==="relances"?"Rien à relancer pour l'instant.":"Rien à afficher.")+'</div>';
+    return;
+  }
   const sect = (titre, grp) => {
+    if (!grp.length) return;
     const h=document.createElement('div');
-    h.className='sec'; h.textContent=titre+" — "+grp.length;
+    h.className='sec'; h.innerHTML=esc(titre)+' <b>'+grp.length+'</b>';
     out.appendChild(h);
-    grp.forEach(c => out.appendChild(carteFeuille(c)));
+    grp.forEach(c => out.appendChild(fiche(c)));
   };
-  if (groupe==="cat"){
+  if (vue==="relances" && !q){
+    const tri = (a,b) => (b.jours===null?1e9:b.jours) - (a.jours===null?1e9:a.jours);
+    sect("À relancer maintenant (J+"+cfg.relanceJ+" ou plus, ou date inconnue)", vue_.filter(c=>c.relanceDue).sort(tri));
+    sect("Trop tôt pour relancer", vue_.filter(c=>!c.relanceDue).sort(tri));
+  } else if (cfg.groupe==="cat"){
     // Par catégorie ; dans chaque catégorie, les contacts à traiter d'abord.
-    const cats=[...new Set(vis.map(c=>c.cat||""))].sort((a,b)=>rangCat(a)-rangCat(b)||a.localeCompare(b,"fr"));
+    const cats=[...new Set(vue_.map(c=>c.cat||""))].sort((a,b)=>rangCat(a)-rangCat(b)||a.localeCompare(b,"fr"));
     cats.forEach(k => sect(k||"Sans catégorie",
-      vis.filter(c=>(c.cat||"")===k).sort((a,b)=>rangEtat(a.etat)-rangEtat(b.etat))));
+      vue_.filter(c=>(c.cat||"")===k).sort((a,b)=>rangEtat(a.etat)-rangEtat(b.etat))));
   } else {
-    const groupes=[...ORDRE_ETAT, ...new Set(vis.map(c=>c.etat||"").filter(e=>ORDRE_ETAT.indexOf(e)<0))];
-    groupes.forEach(et => {
-      const grp = vis.filter(c => (c.etat||"")===et);
-      if (grp.length) sect(et||"Sans état", grp);
-    });
+    const groupes=[...ORDRE_ETAT, ...new Set(vue_.map(c=>c.etat||"").filter(e=>ORDRE_ETAT.indexOf(e)<0))];
+    groupes.forEach(et => sect(et||"Sans état", vue_.filter(c=>(c.etat||"")===et)));
   }
 }
 
-function stats(){
-  const n={};
-  TOUS.forEach(c=>{ const k=c.etat||"Sans état"; n[k]=(n[k]||0)+1; });
-  const s=document.getElementById('stats');
-  s.style.display='';
-  s.innerHTML = Object.keys(n).map(k=>`<span><b>${n[k]}</b> ${esc(k.toLowerCase())}</span>`).join("")
-    + `<span style="margin-left:auto"><b>${TOUS.length}</b> au total</span>`;
+/* ═══════════════ Tableau de bord ═══════════════ */
+function tableau(){
+  const n={}; TOUS.forEach(c=>{ const k=c.etat||"Sans état"; n[k]=(n[k]||0)+1; });
+  const aTraiter = TOUS.filter(c=>c.etat==="À contacter").length;
+  const relances = TOUS.filter(c=>c.relanceDue).length;
+  const aujourdhui = TOUS.filter(c=>c.fait).length;
+  const pct = Math.min(1, aujourdhui / Math.max(1,cfg.objectif));
+  const C = 2*Math.PI*26;
+  $('dash').innerHTML = `
+    <div class="tile goal">
+      <div class="ring${pct>=1?' full':''}"><svg viewBox="0 0 64 64"><circle class="bg" cx="32" cy="32" r="26" fill="none" stroke-width="7"/>
+        <circle class="fg" cx="32" cy="32" r="26" fill="none" stroke-width="7" stroke-linecap="round"
+          stroke-dasharray="${(pct*C).toFixed(1)} ${C.toFixed(1)}"/></svg><b>${aujourdhui}</b></div>
+      <div><div class="k">Aujourd'hui</div><div class="n" style="font-size:14px;color:var(--ink);font-weight:600">
+        ${aujourdhui} / ${cfg.objectif} mails</div>
+        <div class="n">${pct>=1?"Objectif atteint 🎉":"encore "+(cfg.objectif-aujourdhui)+" pour l'objectif"}</div></div>
+    </div>
+    <button class="tile click${vue==="liste"?' on':''}" data-go="todo"><div class="k">À contacter</div><div class="v">${aTraiter}</div><div class="n">jamais écrit</div></button>
+    <button class="tile click${vue==="relances"?' on':''}" data-go="relances"><div class="k">À relancer</div><div class="v">${relances}</div><div class="n">après J+${cfg.relanceJ}</div></button>
+    <div class="tile"><div class="k">RDV</div><div class="v">${n["RDV"]||0}</div><div class="n">${TOUS.length} contacts au total</div></div>`;
+  $('dash').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
+    changerVue(b.dataset.go==="relances"?"relances":"liste");
+    if (b.dataset.go==="todo"){ cfg.filtre="todo"; saveCfg(); majBoutons(); afficher(); }
+  });
+  const keys = ORDRE_ETAT.filter(k=>n[k]).concat(Object.keys(n).filter(k=>ORDRE_ETAT.indexOf(k)<0));
+  const pipe = $('pipe'); pipe.hidden = !TOUS.length;
+  pipe.innerHTML = `<div class="bar">${keys.map(k=>`<i style="width:${(n[k]/TOUS.length*100).toFixed(2)}%;background:${couleur(k==="Sans état"?"":k)}" title="${esc(k)} : ${n[k]}"></i>`).join("")}</div>
+    <div class="legend">${keys.map(k=>`<span><em style="background:${couleur(k==="Sans état"?"":k)}"></em>${esc(k)} <b>${n[k]}</b></span>`).join("")}</div>`;
 }
 
-const heure = d => d.toLocaleTimeString('fr-CH',{hour:'2-digit',minute:'2-digit'});
+/* ═══════════════ Session de prospection ═══════════════ */
+let S = null;
+function fileSession(){
+  return TOUS.filter(c =>
+      (c.etat==="À contacter" || c.etat==="")
+      && !c.fait && !c.reporte
+      && cfg.catsOff.indexOf(c.cat||"")<0
+      && (!catSel || (c.cat||"")===(catSel==="__aucune"?"":catSel))
+      && (c.mail || cfg.sansMail))
+    .sort((a,b)=>rangCat(a.cat)-rangCat(b.cat) || (b.mail?1:0)-(a.mail?1:0));
+}
+function majCTA(){
+  const n = fileSession().length;
+  const b = $('b-session');
+  b.disabled = !n;
+  b.innerHTML = n ? `▶ Lancer une session<small>${n} contact${n>1?"s":""} à écrire</small>` : "Plus rien à écrire pour l'instant";
+}
+function ouvrirSession(){
+  const liste = fileSession();
+  if (!liste.length) return;
+  S = { liste, i:0, fait:0, ok:false };
+  $('sess').hidden = false; document.body.style.overflow = "hidden";
+  rendreSession();
+}
+function fermerSession(){
+  S = null; $('sess').hidden = true; document.body.style.overflow = "";
+  rafraichir();
+}
+function rendreSession(){
+  const box = $('sess');
+  if (S.i >= S.liste.length){
+    box.innerHTML = `<div class="sess-top"><button class="icon" data-x>✕</button><div class="prog"><div class="bar"><i style="width:100%"></i></div><span>Terminé</span></div></div>
+      <div class="sess-main"><div class="end"><div class="big">🎹</div><h2>Session terminée</h2>
+      <p style="color:var(--muted)">${S.fait} contact${S.fait>1?"s":""} préparé${S.fait>1?"s":""} sur cette session.<br>N'oublie pas de passer leur état à « Mail envoyé » dans la feuille.</p></div></div>
+      <div class="sess-bar"><button class="go" data-x>Fermer</button><button data-sheet>Ouvrir la feuille ↗</button></div>`;
+    box.querySelectorAll('[data-x]').forEach(b=>b.onclick=fermerSession);
+    box.querySelector('[data-sheet]').onclick=()=>window.open(SHEET_URL,"_blank");
+    return;
+  }
+  const c = S.liste[S.i];
+  S.ok = false;
+  const fg = couleur(c.etat);
+  box.innerHTML = `
+    <div class="sess-top"><button class="icon" data-x aria-label="Fermer">✕</button>
+      <div class="prog"><div class="bar"><i style="width:${(S.i/S.liste.length*100).toFixed(1)}%"></i></div>
+      <span>${S.i+1} / ${S.liste.length} · ${S.fait} préparé${S.fait>1?"s":""}</span></div></div>
+    <div class="sess-main">
+      <div class="sess-cat">${esc(c.cat||"Sans catégorie")}${c.ville?" · "+esc(c.ville):""}</div>
+      <h2>${esc(c.nom)}</h2>
+      <div class="sess-row"><span class="pill" style="display:inline-block;color:${fg};background:${fg}22">${esc(c.etat||"—")}</span>${badges(c)}</div>
+      <div class="sess-corps">${corpsHTML(c)}</div>
+    </div>
+    <div class="sess-bar"><button data-prev ${S.i?"":"disabled"}>←</button><button data-later>Plus tard</button><button class="go" data-next>Passer →</button></div>`;
+  box.querySelector('[data-x]').onclick = fermerSession;
+  const suivant = () => { S.i++; rendreSession(); };
+  box.querySelector('[data-next]').onclick = suivant;
+  box.querySelector('[data-prev]').onclick = () => { if (S.i){ S.i--; rendreSession(); } };
+  box.querySelector('[data-later]').onclick = () => { reporter(c); suivant(); };
+  brancher(box.querySelector('.sess-corps'), c, () => {
+    if (!S.ok){ S.ok = true; S.fait++; }
+    const n = box.querySelector('[data-next]'); n.textContent = "Suivant →";
+    box.querySelector('.prog span').textContent = (S.i+1)+" / "+S.liste.length+" · "+S.fait+" préparé"+(S.fait>1?"s":"");
+  });
+  box.querySelector('.sess-main').scrollTop = 0;
+}
+document.addEventListener('keydown', e => {
+  if (e.target.isContentEditable || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+  if (!$('cfg').hidden && e.key==="Escape"){ $('cfg').hidden = true; return; }
+  if (!S) return;
+  if (e.key==="Escape") fermerSession();
+  else if (e.key==="ArrowRight"){ const b=$('sess').querySelector('[data-next]'); b && b.click(); }
+  else if (e.key==="ArrowLeft"){ const b=$('sess').querySelector('[data-prev]'); b && !b.disabled && b.click(); }
+});
+
+/* ═══════════════ Réglages ═══════════════ */
+function ouvrirReglages(){
+  const box = $('cfg');
+  const cats = [...new Set(RAW.map(r=>r.catFeuille).filter(Boolean))].sort((a,b)=>rangCat(a)-rangCat(b));
+  const sw = (id, label, sub, on) => `<label class="row"><span>${label}${sub?`<small>${sub}</small>`:""}</span>
+    <span class="sw"><input type="checkbox" id="${id}" ${on?"checked":""}><i></i></span></label>`;
+  box.innerHTML = `<div class="panel">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <h2>Réglages</h2><button class="icon" id="c-x" aria-label="Fermer">✕</button></div>
+    <p class="sub">Enregistrés sur cet appareil, appliqués tout de suite.</p>
+
+    <div class="group"><div class="gt">Mes mails</div>
+      <label class="field"><span>Mon nom (dans la présentation)</span><input id="c-nom" value="${esc(cfg.nom)}"></label>
+      <label class="field"><span>Mon numéro (en fin de mail)</span><input id="c-tel" value="${esc(cfg.tel)}" inputmode="tel"></label>
+      <label class="field"><span>Formule de fin (ta signature automatique prend le relais)</span><input id="c-fin" value="${esc(cfg.fin)}"></label>
+    </div>
+
+    <div class="group"><div class="gt">Rythme</div>
+      <label class="field"><span>Objectif de mails par jour</span><input id="c-obj" type="number" min="1" max="100" value="${cfg.objectif}" inputmode="numeric"></label>
+      <label class="field"><span>Relancer au bout de (jours)</span><input id="c-rel" type="number" min="1" max="60" value="${cfg.relanceJ}" inputmode="numeric"></label>
+    </div>
+
+    <div class="group"><div class="gt">Session de prospection</div>
+      ${sw("c-sm","Inclure les contacts sans e-mail","Pour les appeler ou passer par leur page de contact",cfg.sansMail)}
+      ${cats.length?`<div class="lab" style="margin-top:12px">Catégories incluses</div>`+cats.map((k,i)=>sw("c-cat"+i,esc(k),"",cfg.catsOff.indexOf(k)<0)).join(""):""}
+    </div>
+
+    <div class="group"><div class="gt">Affichage</div>
+      <label class="field"><span>Thème</span><select id="c-th">
+        <option value="auto">Automatique (suit l'appareil)</option><option value="dark">Sombre</option><option value="light">Clair</option></select></label>
+      ${sw("c-rv","Afficher les revendeurs","Thomann, Kawai… masqués par défaut",cfg.revendeurs)}
+    </div>
+
+    <div class="group"><div class="gt">Suivi local</div>
+      <button class="danger" id="c-reset">Remettre le suivi à zéro</button>
+      <p class="sub" style="margin-top:8px">Efface les mails préparés et les « plus tard » de cet appareil. La feuille n'est pas touchée.</p>
+    </div></div>`;
+  box.hidden = false;
+  box.onclick = e => { if (e.target===box) box.hidden = true; };
+  $('c-x').onclick = () => { box.hidden = true; };
+  $('c-th').value = cfg.theme;
+  const maj = () => { saveCfg(); montrer(); };
+  $('c-nom').oninput = e => { cfg.nom = e.target.value.trim() || DEFAUT.nom; maj(); };
+  $('c-tel').oninput = e => { cfg.tel = e.target.value.trim() || DEFAUT.tel; maj(); };
+  $('c-fin').oninput = e => { cfg.fin = e.target.value.trim() || DEFAUT.fin; maj(); };
+  $('c-obj').onchange = e => { cfg.objectif = Math.max(1, +e.target.value||DEFAUT.objectif); maj(); };
+  $('c-rel').onchange = e => { cfg.relanceJ = Math.max(1, +e.target.value||DEFAUT.relanceJ); maj(); };
+  $('c-sm').onchange = e => { cfg.sansMail = e.target.checked; maj(); };
+  $('c-rv').onchange = e => { cfg.revendeurs = e.target.checked; maj(); };
+  $('c-th').onchange = e => { cfg.theme = e.target.value; appliquerTheme(); saveCfg(); };
+  cats.forEach((k,i) => $('c-cat'+i).onchange = e => {
+    cfg.catsOff = cfg.catsOff.filter(x=>x!==k); if (!e.target.checked) cfg.catsOff.push(k); maj(); });
+  let t;
+  $('c-reset').onclick = e => {
+    if (!e.target.dataset.sur){ e.target.dataset.sur=1; e.target.textContent="Touche encore pour confirmer";
+      t=setTimeout(()=>{ e.target.dataset.sur=""; e.target.textContent="Remettre le suivi à zéro"; },4000); return; }
+    clearTimeout(t); LOG = {}; saveLog(); e.target.dataset.sur=""; e.target.textContent="C'est fait ✓"; rafraichir(); };
+}
+
+/* ═══════════════ Chargement ═══════════════ */
+function rafraichir(liste=true){
+  TOUS.forEach(suivi); tableau(); majCTA();
+  if (liste) afficher(); else puces();
+}
+function montrer(csv){
+  if (csv) RAW = parse(csv);
+  if (!RAW.length) throw new Error("aucune ligne trouvée dans la feuille");
+  TOUS = RAW.map(prepare).filter(c => cfg.revendeurs || !(c.k && c.k.masque));
+  rafraichir();
+}
+function changerVue(v){
+  vue = v;
+  document.querySelectorAll('#seg-vue button').forEach(b=>b.classList.toggle('on', b.dataset.v===v));
+  $('seg-etat').style.display = v==="relances" ? "none" : "";
+  catSel = ""; rafraichir();
+}
+function majBoutons(){
+  $('f-todo').classList.toggle('on', cfg.filtre==="todo");
+  $('f-all').classList.toggle('on', cfg.filtre==="all");
+  $('f-group').textContent = "Classé par : " + (cfg.groupe==="cat" ? "catégorie" : "état");
+}
 
 async function lire(){
   const ctl = new AbortController();
   const t = setTimeout(()=>ctl.abort(), 15000);
   try{
     const r = await fetch(CSV_URL+"&_="+Date.now(), {cache:"no-store", signal:ctl.signal});
-    if (r.status===401||r.status===403) throw new Error("accès refusé par Google — partage à vérifier");
+    if (r.status===401||r.status===403) throw new Error("accès refusé par Google : partage à vérifier");
     if (r.status===404) throw new Error("feuille introuvable");
     if (!r.ok) throw new Error("erreur Google (HTTP "+r.status+")");
     const csv = await r.text();
-    if (/^\s*</.test(csv)) throw new Error("accès refusé par Google — partage à vérifier");
+    if (/^\s*</.test(csv)) throw new Error("accès refusé par Google : partage à vérifier");
     return csv;
   }catch(e){
     if (e.name==="AbortError") throw new Error("Google ne répond pas (délai dépassé)");
@@ -733,23 +1123,17 @@ async function lire(){
   }finally{ clearTimeout(t); }
 }
 
-function montrer(csv){
-  TOUS = parse(csv).map(prepare).filter(c => !(c.k && c.k.masque));
-  if (!TOUS.length) throw new Error("aucune ligne trouvée dans la feuille");
-  stats(); afficher();
-}
-
 async function charger(){
-  const out=document.getElementById('out'), horo=document.getElementById('horo');
-  out.innerHTML='<div class="msg">Lecture de la feuille…</div>';
-  horo.textContent="";
+  const out=$('out'), horo=$('horo'), btn=$('b-refresh');
+  btn.classList.add('spin');
+  if (!TOUS.length) out.innerHTML='<div class="msg">Lecture de la feuille…</div>';
   try{
     let csv;
     try{ csv = await lire(); }
     catch(_){ await new Promise(r=>setTimeout(r,1500)); csv = await lire(); }
     montrer(csv);
     try{ localStorage.setItem(CACHE_KEY, JSON.stringify({t:Date.now(), csv})); }catch(_){}
-    horo.textContent = "Feuille lue à " + heure(new Date()) + " · " + TOUS.length + " contacts.";
+    horo.innerHTML = '<span class="live"></span>Feuille lue à ' + heure(new Date()) + ' · ' + TOUS.length + ' contacts';
   }catch(e){
     let cache=null;
     try{ cache = JSON.parse(localStorage.getItem(CACHE_KEY)||"null"); }catch(_){}
@@ -757,37 +1141,40 @@ async function charger(){
       try{
         montrer(cache.csv);
         const d = new Date(cache.t);
-        horo.innerHTML = `<span style="color:var(--warn)">⚠ Lecture impossible (${esc(e.message)}). `
-          + `Affichage de la dernière lecture, du ${d.toLocaleDateString('fr-CH')} à ${heure(d)} — les états peuvent avoir changé.</span>`;
+        horo.innerHTML = '<span class="live stale"></span>Hors ligne : dernière lecture du ' + d.toLocaleDateString('fr-CH') + ' à ' + heure(d);
+        toast("Lecture impossible (" + e.message + "). Les états ont peut-être changé.", "Réessayer", charger);
         return;
       }catch(_){}
     }
-    document.getElementById('stats').style.display='none';
+    $('dash').innerHTML=""; $('pipe').hidden=true; majCTA();
     out.innerHTML = `<div class="err">
       <b>Impossible de lire la feuille.</b> (${esc(e.message)})<br>
-      Vérifiez d'abord la connexion, puis touchez <b>↻ Actualiser</b>.
+      Vérifie d'abord la connexion, puis touche <b>↻</b> en haut à droite.
       Si le problème persiste, la feuille doit être accessible en lecture par lien. Dans Google Sheets :
       <ol>
         <li>Bouton <b>Partager</b> en haut à droite</li>
         <li>Sous « Accès général », choisir <b>Tous les utilisateurs disposant du lien</b></li>
         <li>Rôle <b>Lecteur</b>, puis <b>Terminé</b></li>
-        <li>Revenir ici et toucher <b>↻ Actualiser</b></li>
+        <li>Revenir ici et toucher <b>↻</b></li>
       </ol>
     </div>`;
-  }
+    horo.innerHTML = '<span class="live stale"></span>Lecture impossible';
+  }finally{ btn.classList.remove('spin'); }
 }
 
-document.getElementById('b-refresh').onclick = charger;
-document.getElementById('q').oninput = afficher;
-document.getElementById('f-group').onclick = e => { groupe = groupe==="cat" ? "etat" : "cat";
-  e.currentTarget.textContent = "Classé par : " + (groupe==="cat" ? "catégorie" : "état"); afficher(); };
-document.getElementById('b-sheet').onclick = () => window.open(SHEET_URL,"_blank");
-document.getElementById('f-todo').onclick = () => { filtre="todo";
-  document.getElementById('f-todo').classList.add('on');
-  document.getElementById('f-all').classList.remove('on'); afficher(); };
-document.getElementById('f-all').onclick = () => { filtre="all";
-  document.getElementById('f-all').classList.add('on');
-  document.getElementById('f-todo').classList.remove('on'); afficher(); };
+/* ═══════════════ Démarrage ═══════════════ */
+appliquerTheme();
+matchMedia("(prefers-color-scheme: light)").addEventListener?.("change", appliquerTheme);
+majBoutons();
+$('b-refresh').onclick = charger;
+$('b-sheet').onclick = () => window.open(SHEET_URL,"_blank");
+$('b-cfg').onclick = ouvrirReglages;
+$('b-session').onclick = ouvrirSession;
+$('q').oninput = afficher;
+document.querySelectorAll('#seg-vue button').forEach(b=>b.onclick=()=>changerVue(b.dataset.v));
+$('f-todo').onclick = () => { cfg.filtre="todo"; saveCfg(); majBoutons(); afficher(); };
+$('f-all').onclick  = () => { cfg.filtre="all";  saveCfg(); majBoutons(); afficher(); };
+$('f-group').onclick = () => { cfg.groupe = cfg.groupe==="cat" ? "etat" : "cat"; saveCfg(); majBoutons(); afficher(); };
 
 charger();
 </script>
