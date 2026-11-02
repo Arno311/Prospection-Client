@@ -198,12 +198,12 @@
   .danger{width:100%;min-height:46px;border-radius:12px;border:1px solid color-mix(in srgb,var(--bad) 45%,transparent);
     background:none;color:var(--bad);font-weight:650;margin-top:6px}
 
-  .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:80;
+  .toast{position:fixed;left:0;right:0;margin:0 auto;width:max-content;bottom:calc(18px + env(safe-area-inset-bottom));z-index:80;
     background:var(--ink);color:var(--bg);border-radius:14px;padding:11px 14px;display:flex;gap:12px;align-items:center;
     font-size:14px;font-weight:550;max-width:min(560px,calc(100% - 24px));box-shadow:var(--shadow)}
-  .toast button{border:0;background:none;color:var(--accent);font-weight:700;white-space:nowrap;padding:4px 2px}
-  :root[data-theme=dark] .toast button,:root[data-theme=auto] .toast button{filter:brightness(.6) saturate(1.4)}
-  :root[data-theme=light] .toast button{filter:none}
+  .toast button{border:0;background:none;color:#7fb0ff;font-weight:700;white-space:nowrap;padding:4px 2px}
+  :root[data-theme=dark] .toast{background:#eef1f7;color:#090b10}
+  :root[data-theme=dark] .toast button{color:#1d4ed8}
 
   @media (max-width:760px){
     .dash{grid-template-columns:1fr 1fr}
@@ -785,20 +785,32 @@ function toast(msg, label, fn, dur){
 }
 const ETATS_CHOIX = ["À contacter","Mail envoyé","Relancé","RDV","Pas de réponse","Ne pas contacter"];
 const aujourdhuiMs = () => { const d=new Date(); d.setHours(0,0,0,0); return d.getTime(); };
+async function ecrireEtat(c, etat){
+  const u = cfg.script + (cfg.script.indexOf("?")<0 ? "?" : "&")
+    + new URLSearchParams({cle:cfg.cle, ligne:c.ligne, nom:c.nom, etat}).toString();
+  try{
+    const j = await (await fetch(u, {cache:"no-store"})).json();
+    if (!j.ok) throw new Error(j.error || "refusé par le script");
+    return;
+  }catch(e){
+    if (e instanceof SyntaxError) throw new Error("le script ne répond pas comme prévu (déploiement : accès « Tout le monde » ?)");
+    if (!(e instanceof TypeError)) throw e;
+  }
+  // Réponse illisible (blocage navigateur) : on envoie quand même, puis on relit la feuille pour vérifier.
+  try{ await fetch(u, {mode:"no-cors", cache:"no-store"}); }
+  catch(_){ throw new Error("script injoignable : vérifie l'URL collée et le réseau"); }
+  await new Promise(r => setTimeout(r, 2500));
+  const l = parse(await lire()).find(r => r.ligne === c.ligne);
+  if (!l || l.etat !== etat) throw new Error("le script n'a rien écrit : déploiement en accès « Tout le monde » ? clé identique ?");
+}
 // Écrit l'état dans la feuille via le script Apps Script (voir apps-script.gs).
 async function setEtat(c, etat){
   if (!cfg.script){
     toast("Pour changer l'état d'ici, colle l'URL du script dans les réglages.", "Réglages", ouvrirReglages, 8000);
     return false;
   }
-  try{
-    const u = cfg.script + (cfg.script.indexOf("?")<0 ? "?" : "&")
-      + new URLSearchParams({cle:cfg.cle, ligne:c.ligne, nom:c.nom, etat}).toString();
-    const r = await fetch(u, {cache:"no-store"});
-    const j = await r.json();
-    if (!j.ok) throw new Error(j.error || "refusé par le script");
-  }catch(e){
-    const m = e instanceof TypeError ? "script injoignable (déploiement en accès « Tout le monde » ?)" : e.message;
+  try{ await ecrireEtat(c, etat); }catch(e){
+    const m = e.message;
     toast("Échec : " + m + ". L'état n'a pas changé.", "Réessayer", () => setEtat(c, etat), 10000);
     return false;
   }
