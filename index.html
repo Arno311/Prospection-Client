@@ -254,7 +254,7 @@
 
   <footer>
     L'état se change ici une fois le script branché (réglages), ou directement dans Google Sheets : l'app relit la feuille à chaque ouverture.
-    Ton suivi du jour (mails préparés, « plus tard ») reste sur cet appareil.
+    Version 2026-11-02c. Ton suivi du jour (mails préparés, « plus tard ») reste sur cet appareil.
   </footer>
 </main>
 
@@ -787,9 +787,9 @@ const ETATS_CHOIX = ["À contacter","Mail envoyé","Relancé","RDV","Pas de rép
 const aujourdhuiMs = () => { const d=new Date(); d.setHours(0,0,0,0); return d.getTime(); };
 async function ecrireEtat(c, etat){
   const u = cfg.script + (cfg.script.indexOf("?")<0 ? "?" : "&")
-    + new URLSearchParams({cle:cfg.cle, ligne:c.ligne, nom:c.nom, etat}).toString();
+    + new URLSearchParams({cle:cfg.cle, ligne:c.ligne, nom:c.nom, etat, t:Date.now()}).toString();
   try{
-    const j = await (await fetch(u, {cache:"no-store"})).json();
+    const j = await (await fetch(u)).json();
     if (!j.ok) throw new Error(j.error || "refusé par le script");
     return;
   }catch(e){
@@ -797,7 +797,7 @@ async function ecrireEtat(c, etat){
     if (!(e instanceof TypeError)) throw e;
   }
   // Réponse illisible (blocage navigateur) : on envoie quand même, puis on relit la feuille pour vérifier.
-  try{ await fetch(u, {mode:"no-cors", cache:"no-store"}); }
+  try{ await fetch(u, {mode:"no-cors"}); }
   catch(_){ throw new Error("script injoignable : vérifie l'URL collée et le réseau"); }
   await new Promise(r => setTimeout(r, 2500));
   const l = parse(await lire()).find(r => r.ligne === c.ligne);
@@ -1149,11 +1149,11 @@ function ouvrirReglages(){
     const b = e.target; b.textContent = "Test en cours…";
     try{
       if (!cfg.script) throw new Error("URL du script vide");
-      const u = cfg.script + (cfg.script.indexOf("?")<0?"?":"&") + new URLSearchParams({cle:cfg.cle, ping:1});
-      const j = await (await fetch(u,{cache:"no-store"})).json();
+      const u = cfg.script + (cfg.script.indexOf("?")<0?"?":"&") + new URLSearchParams({cle:cfg.cle, ping:1, t:Date.now()});
+      const j = await (await fetch(u)).json();
       b.textContent = j.ok ? "✓ Connecté à « " + j.onglet + " » (" + j.lignes + " lignes)" : "✗ " + (j.error||"refusé");
     }catch(err){
-      b.textContent = "✗ " + (err instanceof TypeError ? "script injoignable (accès « Tout le monde » ?)" : err.message);
+      b.textContent = "✗ " + (err instanceof TypeError ? "réponse bloquée par le navigateur (" + err.message + ")" : err.message);
     }
   };
   $('c-obj').onchange = e => { cfg.objectif = Math.max(1, +e.target.value||DEFAUT.objectif); maj(); };
