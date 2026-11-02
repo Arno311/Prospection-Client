@@ -381,7 +381,7 @@ const CORE_BATEAU = () => `Si un piano se trouve à bord ou dans vos salons, je 
 Vous pouvez me joindre au ${TEL()}.`;
 
 const ECOLE_SCOLAIRE = { cat:"École scolaire",
-  obj:"Le piano de votre école : qui s'en occupe ?",
+  obj:"Le piano de votre école, qui s'en occupe ?",
   acc:() => `Beaucoup d'écoles ont un piano, à l'aula, dans la salle de musique ou de rythmique, et c'est rarement quelqu'un dont c'est le métier qui s'en occupe. Il se dérègle doucement, et on s'en aperçoit le jour de la fête de fin d'année ou du spectacle.`,
   core:() => `J'aimerais vous accompagner là-dessus, simplement : passer voir vos pianos, vous dire dans quel état ils sont, ce qui est urgent et ce qui peut attendre, puis m'en occuper ensuite si vous le souhaitez. Le premier contrôle est offert, sans engagement. Je peux aussi venir accorder juste avant une fête, un concert ou une cérémonie.
 
@@ -718,6 +718,9 @@ ${SIG()}`;
     if (!c.mail) c.note = sansMail(c);
     else if (!c.acc.perso && !c.relance) c.note = "Nouvelle entrée : accroche générique. Personnalise la phrase surlignée avant d'envoyer.";
   }
+  // Objet : toujours précédé du nom de l'atelier.
+  { const b = c.obj.replace(/^Re : /,""), sujet = "Atelier Piano Léman : " + b.charAt(0).toLowerCase() + b.slice(1);
+    c.obj = c.relance ? "Re : " + sujet : sujet; }
   // La catégorie écrite dans la feuille fait foi pour le classement.
   if (c.catFeuille) c.cat = c.catFeuille;
   const ajout = t => { c.note = c.note ? c.note.replace(/([^.!?»])$/,"$1.") + " " + t : t; };
