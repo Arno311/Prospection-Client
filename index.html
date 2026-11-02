@@ -254,7 +254,7 @@
 
   <footer>
     L'état se change ici une fois le script branché (réglages), ou directement dans Google Sheets : l'app relit la feuille à chaque ouverture.
-    Version 2026-11-02c. Ton suivi du jour (mails préparés, « plus tard ») reste sur cet appareil.
+    Version 2026-11-02d. Ton suivi du jour (mails préparés, « plus tard ») reste sur cet appareil.
   </footer>
 </main>
 
@@ -785,7 +785,28 @@ function toast(msg, label, fn, dur){
 }
 const ETATS_CHOIX = ["À contacter","Mail envoyé","Relancé","RDV","Pas de réponse","Ne pas contacter"];
 const aujourdhuiMs = () => { const d=new Date(); d.setHours(0,0,0,0); return d.getTime(); };
+// Appel du script par balise <script> (JSONP) : fonctionne sur Safari, qui bloque la lecture
+// directe de la réponse (CORS). Le script Apps Script doit renvoyer callback(...) : voir apps-script.gs.
+function appelScript(params){
+  return new Promise((res, rej) => {
+    const cb = "cb" + Date.now() + Math.floor(Math.random()*1e6);
+    const sc = document.createElement("script");
+    let t;
+    const fin = () => { delete window[cb]; sc.remove(); clearTimeout(t); };
+    t = setTimeout(() => { fin(); rej(new TypeError("pas de réponse du script")); }, 12000);
+    window[cb] = j => { fin(); res(j); };
+    sc.onerror = () => { fin(); rej(new TypeError("chargement du script impossible")); };
+    sc.src = cfg.script + (cfg.script.indexOf("?")<0 ? "?" : "&")
+      + new URLSearchParams(Object.assign({}, params, {callback:cb, t:Date.now()})).toString();
+    document.head.appendChild(sc);
+  });
+}
 async function ecrireEtat(c, etat){
+  try{
+    const j = await appelScript({cle:cfg.cle, ligne:c.ligne, nom:c.nom, etat});
+    if (!j.ok) throw new Error(j.error || "refusé par le script");
+    return;
+  }catch(e){ if (!(e instanceof TypeError)) throw e; }
   const u = cfg.script + (cfg.script.indexOf("?")<0 ? "?" : "&")
     + new URLSearchParams({cle:cfg.cle, ligne:c.ligne, nom:c.nom, etat, t:Date.now()}).toString();
   try{
@@ -1150,7 +1171,9 @@ function ouvrirReglages(){
     try{
       if (!cfg.script) throw new Error("URL du script vide");
       const u = cfg.script + (cfg.script.indexOf("?")<0?"?":"&") + new URLSearchParams({cle:cfg.cle, ping:1, t:Date.now()});
-      const j = await (await fetch(u)).json();
+      let j;
+      try{ j = await appelScript({cle:cfg.cle, ping:1}); }
+      catch(_){ j = await (await fetch(u)).json(); }
       b.textContent = j.ok ? "✓ Connecté à « " + j.onglet + " » (" + j.lignes + " lignes)" : "✗ " + (j.error||"refusé");
     }catch(err){
       b.textContent = "✗ " + (err instanceof TypeError ? "réponse bloquée par le navigateur (" + err.message + ")" : err.message);
