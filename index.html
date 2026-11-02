@@ -142,6 +142,11 @@
   .btns button.done{background:var(--ok)!important;border-color:var(--ok)!important;color:#04150d!important}
   .btns button.soft{color:var(--muted)}
 
+  .etats{display:flex;flex-wrap:wrap;gap:7px}
+  .et{min-height:40px;padding:7px 13px;border-radius:30px;font-size:13.5px;font-weight:600;
+    border:1px solid color-mix(in srgb,var(--c) 55%,transparent);background:none;color:var(--ink)}
+  .et.on{background:var(--c);border-color:var(--c);color:#fff}
+  .et:disabled{opacity:.5}
   .msg{padding:34px 4px;color:var(--muted);font-size:14px;text-align:center}
   .err{background:color-mix(in srgb,var(--bad) 10%,transparent);border:1px solid color-mix(in srgb,var(--bad) 35%,transparent);
     color:var(--ink);border-radius:14px;padding:16px;font-size:14px;line-height:1.65}
@@ -248,7 +253,7 @@
   <div id="out"><div class="msg">Lecture de la feuille…</div></div>
 
   <footer>
-    L'état des contacts se modifie dans Google Sheets : l'app le relit à chaque ouverture.
+    L'état se change ici une fois le script branché (réglages), ou directement dans Google Sheets : l'app relit la feuille à chaque ouverture.
     Ton suivi du jour (mails préparés, « plus tard ») reste sur cet appareil.
   </footer>
 </main>
@@ -280,7 +285,7 @@ const couleur  = e => ETATS[e] || ETATS[""];
 
 /* ═══════════════ Réglages et suivi (stockés sur l'appareil) ═══════════════ */
 const DEFAUT = { nom:"Arnaud Cormary", tel:"076 221 40 89", fin:"Bien cordialement,",
-  objectif:10, relanceJ:7, theme:"auto", sansMail:false, revendeurs:false,
+  objectif:10, relanceJ:7, site:"https://atelierpianoleman.ch", script:"", cle:"", theme:"auto", sansMail:false, revendeurs:false,
   catsOff:[], filtre:"todo", groupe:"cat" };
 let cfg = Object.assign({}, DEFAUT), LOG = {};
 try{ cfg = Object.assign({}, DEFAUT, JSON.parse(localStorage.getItem(CFG_KEY)||"{}")); }catch(_){}
@@ -300,7 +305,7 @@ const esc = s => (s||"").replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g
 const $ = id => document.getElementById(id);
 const heure = d => d.toLocaleTimeString('fr-CH',{hour:'2-digit',minute:'2-digit'});
 const jour  = d => d.getFullYear()+"-"+(d.getMonth()+1)+"-"+d.getDate();
-const SIG = () => cfg.fin;
+const SIG = () => (cfg.site ? "Pour mieux me connaître : " + cfg.site + "\n\n" : "") + cfg.fin;
 const TEL = () => cfg.tel;
 
 /* ═══════════════ Textes des mails ═══════════════
@@ -376,7 +381,7 @@ const CORE_BATEAU = () => `Si un piano se trouve à bord ou dans vos salons, je 
 Vous pouvez me joindre au ${TEL()}.`;
 
 const ECOLE_SCOLAIRE = { cat:"École scolaire",
-  obj:"Un accordeur de piano près de chez vous, pour accompagner la musique à l'école",
+  obj:"Le piano de votre école : qui s'en occupe ?",
   acc:() => `Beaucoup d'écoles ont un piano, à l'aula, dans la salle de musique ou de rythmique, et c'est rarement quelqu'un dont c'est le métier qui s'en occupe. Il se dérègle doucement, et on s'en aperçoit le jour de la fête de fin d'année ou du spectacle.`,
   core:() => `J'aimerais vous accompagner là-dessus, simplement : passer voir vos pianos, vous dire dans quel état ils sont, ce qui est urgent et ce qui peut attendre, puis m'en occuper ensuite si vous le souhaitez. Le premier contrôle est offert, sans engagement. Je peux aussi venir accorder juste avant une fête, un concert ou une cérémonie.
 
@@ -390,7 +395,7 @@ Un simple retour à ce message suffit, ou vous pouvez m'appeler au ${TEL()}.`,
 const CIBLES = [
  {cat:"Assurance",
   re:/assuranc|mobiliere|\baxa\b|swiss life|helvetia|baloise|generali|allianz|\bcss\b|vaudoise/,
-  obj:"Expert piano en Suisse romande, pour vos dossiers de sinistre",
+  obj:"Un piano sinistré ? Un expert en Suisse romande",
   acc:() => "Quand un sinistre touche un piano (dégât d'eau, chute lors d'un déménagement, chaleur), l'évaluation demande un œil de spécialiste : ce qui paraît superficiel peut avoir touché la table d'harmonie ou la mécanique, et l'inverse arrive aussi.",
   core:() => `Je vous propose mon aide d'expert pour vos dossiers avec un piano : constat sur place, évaluation des dommages et de la valeur de l'instrument, chiffrage de la remise en état ou constat de perte totale, le tout dans un rapport écrit que vos gestionnaires peuvent utiliser directement. J'interviens dans toute la Suisse romande, dans des délais courts.
 
@@ -399,7 +404,7 @@ Si votre service fait appel à des experts externes pour ce type de dossier, j'a
  // masque:true → contacts lus dans la feuille mais non affichés (réglage « Afficher les revendeurs »).
  {cat:"Revendeur", masque:true,
   re:/thomann|music store|kirstein|session music|musik produktiv|kawai|yamaha music europe|klavier/,
-  obj:"Technicien piano partenaire en Suisse romande",
+  obj:"Un technicien piano pour vos livraisons en Suisse romande",
   acc:() => "Pour un revendeur, chaque piano livré en Suisse romande engage votre image bien après la vente : la mise en accord après livraison, les réglages sous garantie et le suivi des premiers mois se jouent loin de votre magasin.",
   core:() => `Je vous propose d'être votre technicien partenaire dans la région lémanique : accord de mise en service après livraison, interventions sous garantie, préparation d'instruments et suivi de vos clients sur place, avec un compte rendu après chaque intervention.
 
@@ -407,7 +412,7 @@ Si vous cherchez un relais technique fiable entre Genève et Montreux, un simple
   relance:() => relanceCorps("Je reste disponible comme technicien partenaire en Suisse romande, pour la mise en service et le suivi des pianos que vous livrez dans la région.")},
  {cat:"Événementiel",
   re:/sono|evenement|event|audiovisuel|concert|orchestra|regisseur|son et lumiere|imersis|strobotech|raya sound|ppc concept|planner|calla concept|2vibes|dynam/,
-  obj:"Accordeur de piano pour vos concerts et événements, en Suisse romande",
+  obj:"Qui accorde le piano de vos événements ?",
   acc:() => "Sur un événement, le piano est souvent le seul instrument que personne sur place ne sait régler : un accord fait la veille ne tient pas toujours après un transport, un changement de salle ou des projecteurs qui chauffent la scène.",
   core:() => `Je vous propose d'accorder les pianos de vos concerts, galas et événements : intervention sur place avant les balances, retouche entre deux passages si besoin, et contrôle rapide de la mécanique. Je m'adapte aux horaires de montage, tôt le matin ou tard le soir, et je reste joignable le jour J.
 
@@ -427,8 +432,7 @@ function accroche(nom, ville){
   return {t:"Je travaille régulièrement dans " + lieu + " avec des écoles et des structures d'enseignement de la musique. Un piano joué plusieurs heures par jour ne vit pas comme celui d'un particulier : il se dérègle plus vite, et souvent sans prévenir.", perso:false};
 }
 function objet(ville){
-  return ville ? "Accordeur de piano à "+ville+" : un partenaire pour vos pianos"
-               : "Accordeur de piano : un partenaire pour vos pianos";
+  return "Vos élèves jouent-ils sur des pianos justes ?";
 }
 const corps = c => `${intro()}
 
@@ -548,14 +552,14 @@ ${SIG()}`}
 const coreStr = s => norm(s).replace(/[^a-z0-9]/g,"");
 const ENRICH = [
   ...HOTELS.map(c=>({...c, cat:"Hôtel",
-    obj:"Accordeur et facteur de piano sur la Côte, pour le piano de votre établissement",
+    obj:"Le piano de votre établissement sonne-t-il juste ?",
     body:bodyHotel})),
   ...CONCIERGES.map(c=>({...c, cat:"Conciergerie",
-    obj:"Accordeur et facteur de piano : un contact fiable pour vos clients",
+    obj:"Un accordeur de confiance à recommander à vos clients",
     body:bodyConcierge})),
   ...BATEAUX.map(c=>({...c, cat:"Navigation",
-    obj:c.customBody?"Candidature : technicien piano pour la région du Léman"
-                    :"Accordeur et facteur de piano, pour le piano de vos bateaux",
+    obj:c.customBody?"Un technicien piano pour couvrir le Léman"
+                    :"Un piano à bord ? Un accordeur sur le Léman",
     body:c.customBody?(()=>c.customBody()):bodyBateau}))
 ].map(e=>({...e, key:coreStr(e.n)}));
 
@@ -608,6 +612,13 @@ function telephone(s){
   return s;
 }
 
+function dateMs(s){
+  s=(s||"").trim(); let m;
+  if ((m=s.match(/(\d{4})-(\d{1,2})-(\d{1,2})/))) return new Date(+m[1],+m[2]-1,+m[3]).getTime();
+  if ((m=s.match(/(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/))) return new Date(+m[3],+m[2]-1,+m[1]).getTime();
+  return 0;
+}
+
 function parse(csv){
   const rows = parseCSV(csv);
   let head=-1;
@@ -621,7 +632,8 @@ function parse(csv){
   const iNom=pos("nom",0), iTel=pos("numero",1), iMail=pos("mail",2),
         iMail2=pos("mail 2",3), iVille=pos("ville",4), iEtat=pos("etat",5),
         iCat=pos("categorie", 6),
-        iRep=pos("reponse", cols[7] ? -1 : 7);
+        iRep=pos("reponse", cols[7] ? -1 : 7),
+        iDate=pos("dernier contact", -1);
   const out=[];
   for (let i=head+1;i<rows.length;i++){
     const c=rows[i];
@@ -637,6 +649,7 @@ function parse(csv){
       catFeuille:(c[iCat]||"").trim(),
       // Chaque enregistrement CSV correspond à une ligne de la feuille (ligne i+1).
       celluleEtat:String.fromCharCode(65+iEtat) + (i+1),
+      ligne:i+1, dateSheet:iDate>=0 ? dateMs(c[iDate]) : 0,
       rep:iRep>=0 ? (c[iRep]||"").trim() : "" });
   }
   return out;
@@ -724,7 +737,8 @@ function reporter(c){
 }
 function suivi(c){
   const l = LOG[c.key];
-  const last = l && l.ts && l.ts.length ? l.ts[l.ts.length-1] : 0;
+  const lastLog = l && l.ts && l.ts.length ? l.ts[l.ts.length-1] : 0;
+  const last = Math.max(lastLog, c.dateSheet||0);
   c.last = last;
   c.fait = !!last && jour(new Date(last)) === jour(new Date());
   c.reporte = !!(l && l.snooze && l.snooze > Date.now());
@@ -759,12 +773,37 @@ const mailto = (adr, obj, txt) => "mailto:" + encodeURIComponent(adr)
   + "?subject=" + encodeURIComponent(obj) + "&body=" + encodeURIComponent(txt);
 
 let toastTimer;
-function toast(msg, label, fn){
+function toast(msg, label, fn, dur){
   const t = $('toast');
   t.innerHTML = '<span>'+esc(msg)+'</span>' + (label?'<button>'+esc(label)+'</button>':'');
   t.hidden = false;
   if (label) t.querySelector('button').onclick = () => { t.hidden = true; fn && fn(); };
-  clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ t.hidden = true; }, 6000);
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>{ t.hidden = true; }, dur||6000);
+}
+const ETATS_CHOIX = ["À contacter","Mail envoyé","Relancé","RDV","Pas de réponse","Ne pas contacter"];
+const aujourdhuiMs = () => { const d=new Date(); d.setHours(0,0,0,0); return d.getTime(); };
+// Écrit l'état dans la feuille via le script Apps Script (voir apps-script.gs).
+async function setEtat(c, etat){
+  if (!cfg.script){
+    toast("Pour changer l'état d'ici, colle l'URL du script dans les réglages.", "Réglages", ouvrirReglages, 8000);
+    return false;
+  }
+  try{
+    const u = cfg.script + (cfg.script.indexOf("?")<0 ? "?" : "&")
+      + new URLSearchParams({cle:cfg.cle, ligne:c.ligne, nom:c.nom, etat}).toString();
+    const r = await fetch(u, {cache:"no-store"});
+    const j = await r.json();
+    if (!j.ok) throw new Error(j.error || "refusé par le script");
+  }catch(e){
+    const m = e instanceof TypeError ? "script injoignable (déploiement en accès « Tout le monde » ?)" : e.message;
+    toast("Échec : " + m + ". L'état n'a pas changé.", "Réessayer", () => setEtat(c, etat), 10000);
+    return false;
+  }
+  const raw = RAW.find(r => r.ligne === c.ligne);
+  if (raw){ raw.etat = etat; raw.dateSheet = etat==="À contacter" ? 0 : aujourdhuiMs(); }
+  montrer();
+  toast("« " + c.nom + " » passé à « " + etat + " » dans la feuille.");
+  return true;
 }
 const ouvrirEtat = c => window.open(SHEET_URL+"#gid=0&range="+c.celluleEtat,"_blank");
 
@@ -785,12 +824,14 @@ function corpsHTML(c){
       <button class="b-adr">Copier l'adresse</button>`:``}
       ${c.tel&&!c.mail?`<button class="primary b-call">📞 Appeler</button>`:``}
       ${c.contact?`<button class="b-web">Page de contact ↗</button>`:``}
-      ${c.celluleEtat?`<button class="b-etat">Mettre à jour l'état ↗</button>`:``}
+      ${c.celluleEtat&&!cfg.script?`<button class="b-etat">Mettre à jour l'état ↗</button>`:``}
       <button class="b-reset soft">Rétablir le texte</button>
-    </div>`;
+    </div>
+    <div class="lab">État dans la feuille${cfg.script?"":" (script non branché : voir réglages)"}</div>
+    <div class="etats">${ETATS_CHOIX.map(e=>`<button class="et${e===c.etat?' on':''}" data-e="${esc(e)}" style="--c:${couleur(e)}">${esc(e)}</button>`).join("")}</div>`;
 }
 
-function brancher(root, c, apres){
+function brancher(root, c, apres, apresEtat){
   const pre = root.querySelector('pre');
   const rendu = () => {
     let h = esc(c.texte);
@@ -800,8 +841,13 @@ function brancher(root, c, apres){
   rendu();
   const note = (type) => {
     marquer(c, type);
-    toast("C'est noté dans ton suivi. Pense à passer l'état à « " + (c.relance?"Relancé":"Mail envoyé") + " » dans la feuille.",
-          "Ouvrir la cellule", () => ouvrirEtat(c));
+    const cible = c.relance ? "Relancé" : "Mail envoyé";
+    if (cfg.script)
+      toast("C'est noté. Passer « " + c.nom + " » à « " + cible + " » dans la feuille ?", "Oui, passer à « " + cible + " »",
+        async () => { if (await setEtat(c, cible) && apresEtat) apresEtat(cible); }, 25000);
+    else
+      toast("C'est noté dans ton suivi. Pense à passer l'état à « " + cible + " » dans la feuille.",
+            "Ouvrir la cellule", () => ouvrirEtat(c), 12000);
     if (apres) apres();
   };
   root.querySelector('.b-reset').onclick = e => { e.stopPropagation(); rendu(); };
@@ -824,6 +870,13 @@ function brancher(root, c, apres){
   });
   const web = root.querySelector('.b-web');
   if (web) web.onclick = e => { e.stopPropagation(); window.open(c.contact,"_blank"); };
+  root.querySelectorAll('.et').forEach(b => b.onclick = async e => {
+    e.stopPropagation();
+    b.disabled = true;
+    const ok = await setEtat(c, b.dataset.e);
+    b.disabled = false;
+    if (ok && apresEtat) apresEtat(b.dataset.e);
+  });
   const et = root.querySelector('.b-etat');
   if (et) et.onclick = e => { e.stopPropagation(); ouvrirEtat(c); };
 }
@@ -1009,7 +1062,7 @@ function rendreSession(){
     if (!S.ok){ S.ok = true; S.fait++; }
     const n = box.querySelector('[data-next]'); n.textContent = "Suivant →";
     box.querySelector('.prog span').textContent = (S.i+1)+" / "+S.liste.length+" · "+S.fait+" préparé"+(S.fait>1?"s":"");
-  });
+  }, e => { if (e==="À contacter") return; if (!S.ok) S.fait++; suivant(); });
   box.querySelector('.sess-main').scrollTop = 0;
 }
 document.addEventListener('keydown', e => {
@@ -1036,6 +1089,14 @@ function ouvrirReglages(){
       <label class="field"><span>Mon nom (dans la présentation)</span><input id="c-nom" value="${esc(cfg.nom)}"></label>
       <label class="field"><span>Mon numéro (en fin de mail)</span><input id="c-tel" value="${esc(cfg.tel)}" inputmode="tel"></label>
       <label class="field"><span>Formule de fin (ta signature automatique prend le relais)</span><input id="c-fin" value="${esc(cfg.fin)}"></label>
+      <label class="field"><span>Mon site (ajouté dans tous les mails ; vide = aucun)</span><input id="c-site" value="${esc(cfg.site)}" inputmode="url" autocapitalize="off"></label>
+    </div>
+
+    <div class="group"><div class="gt">Synchronisation avec la feuille</div>
+      <p class="sub">Permet de changer l'état d'un contact depuis l'app, et d'inscrire la date du dernier contact (colonne I). Code et mode d'emploi : fichier apps-script.gs.</p>
+      <label class="field"><span>URL du script (se termine par /exec)</span><input id="c-script" value="${esc(cfg.script)}" inputmode="url" autocapitalize="off" placeholder="https://script.google.com/macros/s/…/exec"></label>
+      <label class="field"><span>Clé (la même que dans le script)</span><input id="c-cle" value="${esc(cfg.cle)}" autocapitalize="off" autocomplete="off"></label>
+      <button class="ghost" id="c-test" style="width:100%">Tester la connexion</button>
     </div>
 
     <div class="group"><div class="gt">Rythme</div>
@@ -1066,6 +1127,20 @@ function ouvrirReglages(){
   $('c-nom').oninput = e => { cfg.nom = e.target.value.trim() || DEFAUT.nom; maj(); };
   $('c-tel').oninput = e => { cfg.tel = e.target.value.trim() || DEFAUT.tel; maj(); };
   $('c-fin').oninput = e => { cfg.fin = e.target.value.trim() || DEFAUT.fin; maj(); };
+  $('c-site').oninput = e => { cfg.site = e.target.value.trim(); maj(); };
+  $('c-script').oninput = e => { cfg.script = e.target.value.trim(); maj(); };
+  $('c-cle').oninput = e => { cfg.cle = e.target.value.trim(); maj(); };
+  $('c-test').onclick = async e => {
+    const b = e.target; b.textContent = "Test en cours…";
+    try{
+      if (!cfg.script) throw new Error("URL du script vide");
+      const u = cfg.script + (cfg.script.indexOf("?")<0?"?":"&") + new URLSearchParams({cle:cfg.cle, ping:1});
+      const j = await (await fetch(u,{cache:"no-store"})).json();
+      b.textContent = j.ok ? "✓ Connecté à « " + j.onglet + " » (" + j.lignes + " lignes)" : "✗ " + (j.error||"refusé");
+    }catch(err){
+      b.textContent = "✗ " + (err instanceof TypeError ? "script injoignable (accès « Tout le monde » ?)" : err.message);
+    }
+  };
   $('c-obj').onchange = e => { cfg.objectif = Math.max(1, +e.target.value||DEFAUT.objectif); maj(); };
   $('c-rel').onchange = e => { cfg.relanceJ = Math.max(1, +e.target.value||DEFAUT.relanceJ); maj(); };
   $('c-sm').onchange = e => { cfg.sansMail = e.target.checked; maj(); };
