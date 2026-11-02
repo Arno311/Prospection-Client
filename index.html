@@ -381,7 +381,7 @@ const CORE_BATEAU = () => `Si un piano se trouve à bord ou dans vos salons, je 
 Vous pouvez me joindre au ${TEL()}.`;
 
 const ECOLE_SCOLAIRE = { cat:"École scolaire",
-  obj:"Le piano de votre école, qui s'en occupe ?",
+  obj:"Un partenaire pour le piano de votre école",
   acc:() => `Beaucoup d'écoles ont un piano, à l'aula, dans la salle de musique ou de rythmique, et c'est rarement quelqu'un dont c'est le métier qui s'en occupe. Il se dérègle doucement, et on s'en aperçoit le jour de la fête de fin d'année ou du spectacle.`,
   core:() => `J'aimerais vous accompagner là-dessus, simplement : passer voir vos pianos, vous dire dans quel état ils sont, ce qui est urgent et ce qui peut attendre, puis m'en occuper ensuite si vous le souhaitez. Le premier contrôle est offert, sans engagement. Je peux aussi venir accorder juste avant une fête, un concert ou une cérémonie.
 
@@ -395,7 +395,7 @@ Un simple retour à ce message suffit, ou vous pouvez m'appeler au ${TEL()}.`,
 const CIBLES = [
  {cat:"Assurance",
   re:/assuranc|mobiliere|\baxa\b|swiss life|helvetia|baloise|generali|allianz|\bcss\b|vaudoise/,
-  obj:"Un piano sinistré ? Un expert en Suisse romande",
+  obj:"Un partenaire expert piano pour vos sinistres",
   acc:() => "Quand un sinistre touche un piano (dégât d'eau, chute lors d'un déménagement, chaleur), l'évaluation demande un œil de spécialiste : ce qui paraît superficiel peut avoir touché la table d'harmonie ou la mécanique, et l'inverse arrive aussi.",
   core:() => `Je vous propose mon aide d'expert pour vos dossiers avec un piano : constat sur place, évaluation des dommages et de la valeur de l'instrument, chiffrage de la remise en état ou constat de perte totale, le tout dans un rapport écrit que vos gestionnaires peuvent utiliser directement. J'interviens dans toute la Suisse romande, dans des délais courts.
 
@@ -404,7 +404,7 @@ Si votre service fait appel à des experts externes pour ce type de dossier, j'a
  // masque:true → contacts lus dans la feuille mais non affichés (réglage « Afficher les revendeurs »).
  {cat:"Revendeur", masque:true,
   re:/thomann|music store|kirstein|session music|musik produktiv|kawai|yamaha music europe|klavier/,
-  obj:"Un technicien piano pour vos livraisons en Suisse romande",
+  obj:"Un partenaire technique piano pour vos livraisons",
   acc:() => "Pour un revendeur, chaque piano livré en Suisse romande engage votre image bien après la vente : la mise en accord après livraison, les réglages sous garantie et le suivi des premiers mois se jouent loin de votre magasin.",
   core:() => `Je vous propose d'être votre technicien partenaire dans la région lémanique : accord de mise en service après livraison, interventions sous garantie, préparation d'instruments et suivi de vos clients sur place, avec un compte rendu après chaque intervention.
 
@@ -412,7 +412,7 @@ Si vous cherchez un relais technique fiable entre Genève et Montreux, un simple
   relance:() => relanceCorps("Je reste disponible comme technicien partenaire en Suisse romande, pour la mise en service et le suivi des pianos que vous livrez dans la région.")},
  {cat:"Événementiel",
   re:/sono|evenement|event|audiovisuel|concert|orchestra|regisseur|son et lumiere|imersis|strobotech|raya sound|ppc concept|planner|calla concept|2vibes|dynam/,
-  obj:"Qui accorde le piano de vos événements ?",
+  obj:"Un partenaire pour accorder le piano de vos événements",
   acc:() => "Sur un événement, le piano est souvent le seul instrument que personne sur place ne sait régler : un accord fait la veille ne tient pas toujours après un transport, un changement de salle ou des projecteurs qui chauffent la scène.",
   core:() => `Je vous propose d'accorder les pianos de vos concerts, galas et événements : intervention sur place avant les balances, retouche entre deux passages si besoin, et contrôle rapide de la mécanique. Je m'adapte aux horaires de montage, tôt le matin ou tard le soir, et je reste joignable le jour J.
 
@@ -432,7 +432,7 @@ function accroche(nom, ville){
   return {t:"Je travaille régulièrement dans " + lieu + " avec des écoles et des structures d'enseignement de la musique. Un piano joué plusieurs heures par jour ne vit pas comme celui d'un particulier : il se dérègle plus vite, et souvent sans prévenir.", perso:false};
 }
 function objet(ville){
-  return "Vos élèves jouent-ils sur des pianos justes ?";
+  return "Un partenaire pour que vos élèves jouent sur des pianos justes";
 }
 const corps = c => `${intro()}
 
@@ -552,14 +552,14 @@ ${SIG()}`}
 const coreStr = s => norm(s).replace(/[^a-z0-9]/g,"");
 const ENRICH = [
   ...HOTELS.map(c=>({...c, cat:"Hôtel",
-    obj:"Le piano de votre établissement sonne-t-il juste ?",
+    obj:"Un partenaire pour le piano de votre établissement",
     body:bodyHotel})),
   ...CONCIERGES.map(c=>({...c, cat:"Conciergerie",
-    obj:"Un accordeur de confiance à recommander à vos clients",
+    obj:"Un partenaire piano de confiance pour vos clients",
     body:bodyConcierge})),
   ...BATEAUX.map(c=>({...c, cat:"Navigation",
     obj:c.customBody?"Un technicien piano pour couvrir le Léman"
-                    :"Un piano à bord ? Un accordeur sur le Léman",
+                    :"Un partenaire piano à bord, sur le Léman",
     body:c.customBody?(()=>c.customBody()):bodyBateau}))
 ].map(e=>({...e, key:coreStr(e.n)}));
 
