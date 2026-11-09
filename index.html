@@ -254,7 +254,7 @@
 
   <footer>
     L'état se change ici une fois le script branché (réglages), ou directement dans Google Sheets : l'app relit la feuille à chaque ouverture.
-    Version 2026-11-02d. Ton suivi du jour (mails préparés, « plus tard ») reste sur cet appareil.
+    Version 2026-11-08. Ton suivi du jour (mails préparés, « plus tard ») reste sur cet appareil.
   </footer>
 </main>
 
@@ -826,12 +826,29 @@ async function ecrireEtat(c, etat){
   const l = parse(await lire()).find(r => r.ligne === c.ligne);
   if (!l || l.etat !== etat) throw new Error("le script n'a rien écrit : déploiement en accès « Tout le monde » ? clé identique ?");
 }
+// « /u/0/ » (choix du compte Google) oblige à être connecté : on le retire de l'URL /exec.
+const nettoyerUrlScript = s => (s||"").trim().replace(/(script\.google\.com\/macros)\/u\/\d+(?=\/)/,"$1");
+// Erreurs de réglage les plus fréquentes, expliquées avant tout appel réseau.
+function problemeScript(){
+  const u = cfg.script = nettoyerUrlScript(cfg.script);
+  if (!u) return "URL du script vide";
+  if (/script\.google\.com\/(u\/\d+\/)?home\//.test(u) || /\/edit(\?|$)/.test(u))
+    return "c'est l'adresse de l'éditeur, pas celle du script publié. Dans Apps Script : Déployer → Gérer les déploiements → copie « URL de l'application Web » (elle se termine par /exec)";
+  if (/\/dev(\?|$)/.test(u))
+    return "c'est l'URL de test (/dev), qui demande d'être connecté. Prends l'URL de déploiement qui se termine par /exec";
+  if (!/^https:\/\/script\.google\.com\/(a\/[^/]+\/)?macros\/s\/[\w-]+\/exec$/.test(u))
+    return "l'URL doit ressembler à https://script.google.com/macros/s/…/exec";
+  if (!cfg.cle) return "clé vide : recopie la valeur de CLE écrite dans le script";
+  return "";
+}
 // Écrit l'état dans la feuille via le script Apps Script (voir apps-script.gs).
 async function setEtat(c, etat){
   if (!cfg.script){
     toast("Pour changer l'état d'ici, colle l'URL du script dans les réglages.", "Réglages", ouvrirReglages, 8000);
     return false;
   }
+  const pb = problemeScript();
+  if (pb){ toast("Réglages à corriger : " + pb, "Réglages", ouvrirReglages, 12000); return false; }
   try{ await ecrireEtat(c, etat); }catch(e){
     const m = e.message;
     toast("Échec : " + m + ". L'état n'a pas changé.", "Réessayer", () => setEtat(c, etat), 10000);
@@ -1166,12 +1183,13 @@ function ouvrirReglages(){
   $('c-tel').oninput = e => { cfg.tel = e.target.value.trim() || DEFAUT.tel; maj(); };
   $('c-fin').oninput = e => { cfg.fin = e.target.value.trim() || DEFAUT.fin; maj(); };
   $('c-site').oninput = e => { cfg.site = e.target.value.trim(); maj(); };
-  $('c-script').oninput = e => { cfg.script = e.target.value.trim(); maj(); };
+  $('c-script').oninput = e => { cfg.script = nettoyerUrlScript(e.target.value); maj(); };
   $('c-cle').oninput = e => { cfg.cle = e.target.value.trim(); maj(); };
   $('c-test').onclick = async e => {
     const b = e.target; b.textContent = "Test en cours…";
     try{
-      if (!cfg.script) throw new Error("URL du script vide");
+      const pb = problemeScript();
+      if (pb) throw new Error(pb);
       const u = cfg.script + (cfg.script.indexOf("?")<0?"?":"&") + new URLSearchParams({cle:cfg.cle, ping:1, t:Date.now()});
       let j;
       try{ j = await appelScript({cle:cfg.cle, ping:1}); }
