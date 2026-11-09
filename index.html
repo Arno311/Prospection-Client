@@ -241,6 +241,7 @@
       <button data-v="relances">Relances</button>
     </div>
     <div class="seg" id="seg-etat">
+      <button id="f-new">À contacter</button>
       <button id="f-todo" class="on">À traiter</button>
       <button id="f-all">Tout</button>
     </div>
@@ -254,7 +255,7 @@
 
   <footer>
     L'état se change ici une fois le script branché (réglages), ou directement dans Google Sheets : l'app relit la feuille à chaque ouverture.
-    Version 2026-11-08. Ton suivi du jour (mails préparés, « plus tard ») reste sur cet appareil.
+    Version 2026-11-09. Ton suivi du jour (mails préparés, « plus tard ») reste sur cet appareil.
   </footer>
 </main>
 
@@ -975,17 +976,24 @@ let RAW=[], TOUS=[], vue="liste", catSel="";
 
 function base(){
   if (vue==="relances") return TOUS.filter(c=>c.aRelancer);
+  if (cfg.filtre==="new") return TOUS.filter(c => c.etat==="À contacter");
   return TOUS.filter(c => cfg.filtre==="all" || (c.etat!=="Ne pas contacter" && c.etat!=="RDV"));
 }
+
+// Contacts dont la colonne « Réponse » (H) est remplie, quel que soit leur état.
+const repondu = () => TOUS.filter(c => c.rep);
 
 function puces(){
   const box=$('cats');
   const b = base();
   const n={}; b.forEach(c=>{ const k=c.cat||""; n[k]=(n[k]||0)+1; });
   const cats=Object.keys(n).sort((a,b)=>rangCat(a)-rangCat(b)||a.localeCompare(b,"fr"));
-  if (catSel && !((catSel==="__aucune"?"":catSel) in n)) catSel="";
+  const nRep = repondu().length;
+  if (catSel && catSel!=="__repondu" && !((catSel==="__aucune"?"":catSel) in n)) catSel="";
+  if (catSel==="__repondu" && !nRep) catSel="";
   const mk=(k,l,nb)=>`<button class="chip${catSel===k?' on':''}" data-k="${esc(k)}">${esc(l)}<small>${nb}</small></button>`;
-  box.innerHTML = mk("","Toutes",b.length) + cats.map(k=>mk(k||"__aucune",k||"Sans catégorie",n[k])).join("");
+  box.innerHTML = mk("","Toutes",b.length) + (nRep?mk("__repondu","✉ Ont répondu",nRep):"")
+    + cats.map(k=>mk(k||"__aucune",k||"Sans catégorie",n[k])).join("");
   box.querySelectorAll('.chip').forEach(x=>x.onclick=()=>{ catSel=x.dataset.k; afficher(); });
 }
 
@@ -995,9 +1003,10 @@ function afficher(){
   out.innerHTML="";
   // Une recherche porte sur tous les contacts, quel que soit le filtre d'état.
   const q = norm($('q').value);
-  const vue_ = TOUS.filter(c => (!catSel || (c.cat||"")===(catSel==="__aucune"?"":catSel)) && (q
-    ? norm([c.nom,c.ville,c.mail,c.autres.join(" "),c.cat,c.etat].join(" ")).includes(q)
-    : base().indexOf(c)>=0));
+  const rep = catSel==="__repondu";
+  const vue_ = TOUS.filter(c => (rep ? !!c.rep : (!catSel || (c.cat||"")===(catSel==="__aucune"?"":catSel))) && (q
+    ? norm([c.nom,c.ville,c.mail,c.autres.join(" "),c.cat,c.etat,c.rep].join(" ")).includes(q)
+    : rep || base().indexOf(c)>=0));
   if (!vue_.length){
     out.innerHTML='<div class="msg">'+(q?"Aucun contact ne correspond à la recherche."
       : vue==="relances"?"Rien à relancer pour l'instant.":"Rien à afficher.")+'</div>';
@@ -1047,7 +1056,7 @@ function tableau(){
     <div class="tile"><div class="k">RDV</div><div class="v">${n["RDV"]||0}</div><div class="n">${TOUS.length} contacts au total</div></div>`;
   $('dash').querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
     changerVue(b.dataset.go==="relances"?"relances":"liste");
-    if (b.dataset.go==="todo"){ cfg.filtre="todo"; saveCfg(); majBoutons(); afficher(); }
+    if (b.dataset.go==="todo"){ cfg.filtre="new"; saveCfg(); majBoutons(); afficher(); }
   });
   const keys = ORDRE_ETAT.filter(k=>n[k]).concat(Object.keys(n).filter(k=>ORDRE_ETAT.indexOf(k)<0));
   const pipe = $('pipe'); pipe.hidden = !TOUS.length;
@@ -1231,6 +1240,7 @@ function changerVue(v){
   catSel = ""; rafraichir();
 }
 function majBoutons(){
+  $('f-new').classList.toggle('on', cfg.filtre==="new");
   $('f-todo').classList.toggle('on', cfg.filtre==="todo");
   $('f-all').classList.toggle('on', cfg.filtre==="all");
   $('f-group').textContent = "Classé par : " + (cfg.groupe==="cat" ? "catégorie" : "état");
@@ -1305,6 +1315,7 @@ $('b-cfg').onclick = ouvrirReglages;
 $('b-session').onclick = ouvrirSession;
 $('q').oninput = afficher;
 document.querySelectorAll('#seg-vue button').forEach(b=>b.onclick=()=>changerVue(b.dataset.v));
+$('f-new').onclick  = () => { cfg.filtre="new";  saveCfg(); majBoutons(); afficher(); };
 $('f-todo').onclick = () => { cfg.filtre="todo"; saveCfg(); majBoutons(); afficher(); };
 $('f-all').onclick  = () => { cfg.filtre="all";  saveCfg(); majBoutons(); afficher(); };
 $('f-group').onclick = () => { cfg.groupe = cfg.groupe==="cat" ? "etat" : "cat"; saveCfg(); majBoutons(); afficher(); };
